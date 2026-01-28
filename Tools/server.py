@@ -332,6 +332,17 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="get_full_context",
+            description="Gets FULL context for a task/query: similar nodes, related specs, constraints, current location. Use at start of ANY task.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Task description or query (e.g., 'добавить авторизацию', 'implement OAuth')"}
+                },
+                "required": ["query"]
+            }
+        ),
+        types.Tool(
             name="sync_graph",
             description="Forces a full synchronization of the Neo4j graph into Obsidian Markdown files.",
             inputSchema={"type": "object"}
@@ -429,6 +440,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "create_concept": return await tool_create_concept(arguments)
     elif name == "look_for_similar": return await tool_look_for_similar(arguments)
     elif name == "explain_physics": return await tool_explain_physics(arguments)
+    elif name == "get_full_context": return await tool_get_full_context(arguments)
     elif name == "sync_graph": return await tool_sync_graph(arguments)
     elif name == "link_nodes": return await tool_link_nodes(arguments)
     elif name == "delete_node": return await tool_delete_node(arguments)
@@ -908,6 +920,152 @@ async def tool_explain_physics(arguments: dict) -> list[types.TextContent]:
                  f"      → Используйте move_to(target_uid) для перемещения\n"
                  f"   2. Теперь '{tool_name}' будет доступен"
         )]
+
+
+
+async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
+    """
+    Gets FULL context for a task:
+    - Semantically similar nodes (embeddings)
+    - Related Specs/Requirements (graph structure) 
+    - Active Constraints (Meta-Graph)
+    - Current location and neighbors
+    - Graph statistics
+    """
+    query = arguments.get("query")
+    
+    driver = get_driver()
+    loc_uid = get_agent_location()
+    current_node_type = get_node_type(loc_uid)
+    
+    context_parts = []
+    
+    # === 1. CURRENT LOCATION ===
+    context_parts.append("📍 **ТЕКУЩАЯ ЛОКАЦИЯ**")
+    
+    loc_query = "MATCH (n {uid: $uid}) RETURN n.title as title, labels(n)[0] as type"
+    loc_rec, _, _ = driver.execute_query(loc_query, {"uid": loc_uid}, database_="neo4j")
+    if loc_rec:
+        loc_title = loc_rec[0].get("title", "N/A")
+        context_parts.append(f"   (:{current_node_type} {{uid: '{loc_uid}'}})")
+        context_parts.append(f"   Title: {loc_title}\n")
+    
+    # === 2. NEIGHBORS ===
+    neighbors_query = """
+    MATCH (current {uid: $uid})-[r]-(neighbor)
+    RETURN neighbor.uid as uid, neighbor.title as title, 
+           labels(neighbor)[0] as type, type(r) as rel_type
+    LIMIT 5
+    """
+    neighbors_rec, _, _ = driver.execute_query(neighbors_query, {"uid": loc_uid}, database_="neo4j")
+    
+    if neighbors_rec:
+        context_parts.append("🔗 **СОСЕДИ** (первые 5)")
+        for n in neighbors_rec:
+            rel = n["rel_type"]
+            ntype = n["type"]
+            nuid = n["uid"]
+            ntitle = n.get("title", n.get("name", "N/A"))
+            context_parts.append(f"   [{rel}] → (:{ntype} {{uid: '{nuid}'}}) — {ntitle}")
+        context_parts.append("")
+    
+    # === 3. SEMANTICALLY SIMILAR NODES ===
+    embedding = emb_manager.get_embedding(query)
+    
+    if embedding:
+        context_parts.append("🧠 **СЕМАНТИЧЕСКИ БЛИЗКИЕ НОДЫ** (top-5)")
+        
+        vector_search_cypher = """
+        MATCH (n)
+        WHERE n.embedding IS NOT NULL AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+        WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $query_emb[i]) as score
+        WHERE score > 0.4
+        RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
+        ORDER BY score DESC LIMIT 5
+        """
+        
+        sim_rec, _, _ = driver.execute_query(vector_search_cypher, {"query_emb": embedding}, database_="neo4j")
+        
+        if sim_rec:
+            for s in sim_rec:
+                stype = s["type"]
+                suid = s["uid"]
+                stitle = s.get("title", "N/A")
+                score = s["score"]
+                context_parts.append(f"   [{stype}] {suid}: {stitle} (Score: {score:.3f})")
+        else:
+            context_parts.append("   (Не найдено похожих нод)")
+        context_parts.append("")
+    
+    # === 4. RELATED SPECS & REQUIREMENTS ===
+    context_parts.append("📋 **СВЯЗАННЫЕ SPECS & REQUIREMENTS**")
+    
+    related_query = """
+    MATCH path = (current {uid: $uid})-[:DECOMPOSES*1..2]-(related)
+    WHERE related:Spec OR related:Requirement
+    RETURN DISTINCT related.uid as uid, related.title as title, labels(related)[0] as type
+    LIMIT 10
+    """
+    related_rec, _, _ = driver.execute_query(related_query, {"uid": loc_uid}, database_="neo4j")
+    
+    if related_rec:
+        for r in related_rec:
+            rtype = r["type"]
+            ruid = r["uid"]
+            rtitle = r.get("title", "N/A")
+            context_parts.append(f"   [{rtype}] {ruid}: {rtitle}")
+    else:
+        context_parts.append("   (Нет связанных Specs/Requirements)")
+    context_parts.append("")
+    
+    # === 5. ACTIVE CONSTRAINTS ===
+    context_parts.append("⚠️ **АКТИВНЫЕ CONSTRAINTS** (применяются ко всем actions)")
+    
+    constraints_query = """
+    MATCH (c:Constraint)
+    RETURN c.uid as uid, c.rule_name as rule_name, c.error_message as error_message
+    """
+    constraints_rec, _, _ = driver.execute_query(constraints_query, database_="neo4j")
+    
+    if constraints_rec:
+        for c in constraints_rec:
+            cuid = c["uid"]
+            crule = c.get("rule_name", "N/A")
+            cerr = c.get("error_message", "")
+            context_parts.append(f"   {cuid}: {crule}")
+            if cerr:
+                context_parts.append(f"      → {cerr}")
+    else:
+        context_parts.append("   (Нет активных constraints)")
+    context_parts.append("")
+    
+    # === 6. GRAPH STATISTICS ===
+    context_parts.append("📊 **СТАТИСТИКА ГРАФА**")
+    
+    stats_query = """
+    MATCH (n)
+    WHERE n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain
+    RETURN labels(n)[0] as type, count(n) as count
+    ORDER BY count DESC
+    """
+    stats_rec, _, _ = driver.execute_query(stats_query, database_="neo4j")
+    
+    if stats_rec:
+        for s in stats_rec:
+            stype = s["type"]
+            scount = s["count"]
+            context_parts.append(f"   {stype}: {scount} узлов")
+    context_parts.append("")
+    
+    # === 7. RECOMMENDATIONS ===
+    context_parts.append("💡 **РЕКОМЕНДАЦИИ**")
+    context_parts.append("   • Используйте create_concept для создания новых узлов")
+    context_parts.append("   • Используйте link_nodes для связывания с найденными узлами")
+    context_parts.append("   • Проверьте Constraints перед созданием контента")
+    
+    full_text = "\n".join(context_parts)
+    
+    return [types.TextContent(type="text", text=full_text)]
 
 
 # --- SERVER ENTRYPOINT ---

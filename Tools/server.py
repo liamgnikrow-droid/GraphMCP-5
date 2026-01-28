@@ -374,6 +374,29 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="propose_change",
+            description="Proposes a change to the Meta-Graph (Architecture Mode). Requires Human approval.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "change_type": {
+                        "type": "string", 
+                        "enum": ["add_node_type", "add_action", "add_constraint", "modify_rule"],
+                        "description": "Type of change to propose"
+                    },
+                    "rationale": {
+                        "type": "string",
+                        "description": "Explanation WHY this change is needed (in Russian)"
+                    },
+                    "details": {
+                        "type": "object",
+                        "description": "JSON object with change-specific details (e.g., {name, description, ...})"
+                    }
+                },
+                "required": ["change_type", "rationale", "details"]
+            }
+        ),
+        types.Tool(
             name="register_task",
             description="Registers a new Task from Human's chat message. ALL CONTENT MUST BE IN RUSSIAN.",
             inputSchema={
@@ -410,6 +433,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "link_nodes": return await tool_link_nodes(arguments)
     elif name == "delete_node": return await tool_delete_node(arguments)
     elif name == "delete_link": return await tool_delete_link(arguments)
+    elif name == "propose_change": return await tool_propose_change(arguments)
     elif name == "register_task": return await tool_register_task(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
@@ -588,6 +612,139 @@ async def tool_register_task(arguments: dict) -> list[types.TextContent]:
         
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error registering task: {e}")]
+
+
+async def tool_propose_change(arguments: dict) -> list[types.TextContent]:
+    """
+    Proposes a change to the Meta-Graph (Architecture Mode).
+    Creates a :Proposal node that requires Human approval before execution.
+    """
+    change_type = arguments.get("change_type")
+    rationale = arguments.get("rationale")
+    details = arguments.get("details", {})
+    
+    # 1. Validate rationale is in Russian
+    try:
+        validate_physics_constraints(rationale)
+    except ValueError as e:
+        return [types.TextContent(type="text", text=f"❌ {str(e)}")]
+    
+    # 2. Generate proposal ID
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    proposal_uid = f"PROPOSAL-{change_type.upper()}-{timestamp}"
+    
+    # 3. Generate Cypher script based on change_type
+    cypher_script = ""
+    
+    if change_type == "add_node_type":
+        node_name = details.get("name", "Unknown")
+        description = details.get("description", "")
+        max_count = details.get("max_count", "null")
+        
+        cypher_script = f"""
+// Add new NodeType: {node_name}
+CREATE (:NodeType {{
+    name: '{node_name}',
+    description: '{description}',
+    max_count: {max_count}
+}});
+"""
+    
+    elif change_type == "add_action":
+        action_uid = details.get("uid", "ACT-UNKNOWN")
+        tool_name = details.get("tool_name", "unknown")
+        scope = details.get("scope", "contextual")
+        target_type = details.get("target_type")
+        
+        cypher_script = f"""
+// Add new Action: {action_uid}
+CREATE (:Action {{
+    uid: '{action_uid}',
+    tool_name: '{tool_name}',
+    scope: '{scope}'{f", target_type: '{target_type}'" if target_type else ""}
+}});
+
+// Link to NodeType (specify in details.allowed_from)
+"""
+        if "allowed_from" in details:
+            for node_type in details["allowed_from"]:
+                cypher_script += f"""
+MATCH (nt:NodeType {{name: '{node_type}'}}), (a:Action {{uid: '{action_uid}'}})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+"""
+    
+    elif change_type == "add_constraint":
+        constraint_uid = details.get("uid", "CON-UNKNOWN")
+        rule_name = details.get("rule_name", "Unknown Rule")
+        function = details.get("function", "")
+        error_message = details.get("error_message", "")
+        
+        cypher_script = f"""
+// Add new Constraint: {constraint_uid}
+CREATE (:Constraint {{
+    uid: '{constraint_uid}',
+    rule_name: '{rule_name}',
+    function: '{function}',
+    error_message: '{error_message}'
+}});
+
+// Link to Actions (specify in details.restricts)
+"""
+        if "restricts" in details:
+            for action_uid in details["restricts"]:
+                cypher_script += f"""
+MATCH (c:Constraint {{uid: '{constraint_uid}'}}), (a:Action {{uid: '{action_uid}'}})
+CREATE (c)-[:RESTRICTS]->(a);
+"""
+    
+    elif change_type == "modify_rule":
+        cypher_script = details.get("cypher", "// Custom Cypher provided by user")
+    
+    # 4. Create Proposal node
+    driver = get_driver()
+    
+    create_proposal_query = """
+    CREATE (p:Proposal {
+        uid: $uid,
+        change_type: $change_type,
+        rationale: $rationale,
+        details: $details_json,
+        cypher_script: $cypher_script,
+        status: 'pending',
+        created_at: datetime(),
+        created_by: 'agent'
+    })
+    RETURN p.uid as uid
+    """
+    
+    try:
+        import json
+        
+        driver.execute_query(create_proposal_query, {
+            "uid": proposal_uid,
+            "change_type": change_type,
+            "rationale": rationale,
+            "details_json": json.dumps(details, ensure_ascii=False),
+            "cypher_script": cypher_script
+        }, database_="neo4j")
+        
+        # Sync to Markdown
+        file_path = sync_tool.sync_node(proposal_uid, sync_connected=False)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"✅ Предложение зарегистрировано: {proposal_uid}\n\n"
+                 f"📋 Тип изменения: {change_type}\n"
+                 f"💡 Обоснование: {rationale}\n\n"
+                 f"🔒 Статус: PENDING (требует одобрения Human)\n\n"
+                 f"📄 Cypher-скрипт для применения:\n```cypher\n{cypher_script}\n```\n\n"
+                 f"💾 Сохранено: {file_path}\n\n"
+                 f"⏭️ Следующий шаг: Human должен проверить и одобрить это предложение."
+        )]
+        
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error creating proposal: {e}")]
 
 
 async def tool_look_for_similar(arguments: dict) -> list[types.TextContent]:

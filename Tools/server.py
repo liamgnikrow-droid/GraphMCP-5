@@ -321,6 +321,17 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="explain_physics",
+            description="Explains why a tool is blocked or available at your current location. Provides path to unlock if blocked.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tool_name": {"type": "string", "description": "Name of the tool to check (e.g., 'create_concept')"}
+                },
+                "required": ["tool_name"]
+            }
+        ),
+        types.Tool(
             name="sync_graph",
             description="Forces a full synchronization of the Neo4j graph into Obsidian Markdown files.",
             inputSchema={"type": "object"}
@@ -394,6 +405,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "move_to": return await tool_move_to(arguments)
     elif name == "create_concept": return await tool_create_concept(arguments)
     elif name == "look_for_similar": return await tool_look_for_similar(arguments)
+    elif name == "explain_physics": return await tool_explain_physics(arguments)
     elif name == "sync_graph": return await tool_sync_graph(arguments)
     elif name == "link_nodes": return await tool_link_nodes(arguments)
     elif name == "delete_node": return await tool_delete_node(arguments)
@@ -623,6 +635,123 @@ async def tool_look_for_similar(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text="Semantically similar nodes:\n" + "\n".join(results))]
     except Exception as e:
         return [types.TextContent(type="text", text=f"Error during semantic search: {e}")]
+
+async def tool_explain_physics(arguments: dict) -> list[types.TextContent]:
+    """
+    Explains why a tool is available or blocked at the current location.
+    Introspects the Meta-Graph to provide reasoning and unlock paths.
+    """
+    tool_name = arguments.get("tool_name")
+    
+    # Get current context
+    loc_uid = get_agent_location()
+    current_node_type = get_node_type(loc_uid)
+    allowed_tools = get_allowed_tool_names(current_node_type)
+    
+    driver = get_driver()
+    
+    # Check if tool is allowed
+    is_allowed = tool_name in allowed_tools
+    
+    if is_allowed:
+        # Tool is AVAILABLE — explain why
+        
+        # Check if it's a global tool
+        global_query = """
+        MATCH (a:Action {tool_name: $tool_name, scope: 'global'})
+        RETURN a.uid as uid
+        """
+        global_records, _, _ = driver.execute_query(global_query, {"tool_name": tool_name}, database_="neo4j")
+        
+        if global_records:
+            return [types.TextContent(
+                type="text",
+                text=f"✅ Действие ДОСТУПНО.\n\n"
+                     f"📍 Ваша локация: (:{current_node_type} {{uid: '{loc_uid}'}})\n\n"
+                     f"⚙️ Причина доступности:\n"
+                     f"   Инструмент '{tool_name}' является ГЛОБАЛЬНЫМ (scope='global').\n"
+                     f"   Он доступен из любой локации в графе."
+            )]
+        
+        # Otherwise it's contextual
+        contextual_query = """
+        MATCH (nt:NodeType {name: $node_type})-[:CAN_PERFORM]->(a:Action {tool_name: $tool_name, scope: 'contextual'})
+        RETURN a.uid as action_uid, a.target_type as target_type
+        """
+        contextual_records, _, _ = driver.execute_query(
+            contextual_query, 
+            {"node_type": current_node_type, "tool_name": tool_name}, 
+            database_="neo4j"
+        )
+        
+        if contextual_records:
+            action_info = contextual_records[0]
+            target_type = action_info.get("target_type", "N/A")
+            
+            return [types.TextContent(
+                type="text",
+                text=f"✅ Действие ДОСТУПНО.\n\n"
+                     f"📍 Ваша локация: (:{current_node_type} {{uid: '{loc_uid}'}})\n\n"
+                     f"⚙️ Причина доступности:\n"
+                     f"   Мета-Граф содержит связь:\n"
+                     f"   (:NodeType {{name: '{current_node_type}'}})-[:CAN_PERFORM]->(:Action {{tool_name: '{tool_name}'}})\n\n"
+                     f"💡 Детали:\n"
+                     f"   Target Type: {target_type if target_type != 'N/A' else 'любой'}"
+            )]
+    
+    else:
+        # Tool is BLOCKED — explain why and suggest path
+        
+        # Find which NodeTypes CAN use this tool
+        unlock_query = """
+        MATCH (nt:NodeType)-[:CAN_PERFORM]->(a:Action {tool_name: $tool_name})
+        RETURN nt.name as node_type, a.target_type as target_type
+        ORDER BY nt.name
+        """
+        unlock_records, _, _ = driver.execute_query(unlock_query, {"tool_name": tool_name}, database_="neo4j")
+        
+        if not unlock_records:
+            return [types.TextContent(
+                type="text",
+                text=f"❌ Действие НЕДОСТУПНО.\n\n"
+                     f"📍 Ваша локация: (:{current_node_type} {{uid: '{loc_uid}'}})\n\n"
+                     f"⚙️ Причина блокировки:\n"
+                     f"   Инструмент '{tool_name}' не существует в Мета-Графе или не привязан ни к одному NodeType.\n\n"
+                     f"💡 Возможные причины:\n"
+                     f"   1. Опечатка в названии инструмента\n"
+                     f"   2. Инструмент ещё не реализован\n"
+                     f"   3. Мета-Граф не содержит правил для этого инструмента"
+            )]
+        
+        # Build unlock path suggestions
+        unlock_paths = []
+        for record in unlock_records:
+            node_type = record["node_type"]
+            target_type = record.get("target_type")
+            
+            if target_type:
+                unlock_paths.append(f"   • Находясь в (:{node_type}), можно создать :{target_type}")
+            else:
+                unlock_paths.append(f"   • Находясь в (:{node_type}), можно использовать '{tool_name}'")
+        
+        # Suggest concrete steps
+        first_unlock_type = unlock_records[0]["node_type"]
+        
+        return [types.TextContent(
+            type="text",
+            text=f"❌ Действие НЕДОСТУПНО.\n\n"
+                 f"📍 Ваша локация: (:{current_node_type} {{uid: '{loc_uid}'}})\n\n"
+                 f"⚙️ Причина блокировки:\n"
+                 f"   Мета-Граф не содержит связи:\n"
+                 f"   (:NodeType {{name: '{current_node_type}'}})-[:CAN_PERFORM]->(:Action {{tool_name: '{tool_name}'}})\n\n"
+                 f"🚪 Где этот инструмент ДОСТУПЕН:\n" + "\n".join(unlock_paths) + "\n\n"
+                 f"💡 Путь к действию:\n"
+                 f"   1. Переместитесь в узел типа :{first_unlock_type}\n"
+                 f"      → Используйте look_around для поиска соседей\n"
+                 f"      → Используйте move_to(target_uid) для перемещения\n"
+                 f"   2. Теперь '{tool_name}' будет доступен"
+        )]
+
 
 # --- SERVER ENTRYPOINT ---
 if __name__ == "__main__":

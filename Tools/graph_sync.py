@@ -198,18 +198,39 @@ class GraphSync:
             body.append(description)
             body.append("")
             
+        # Content (Full Body)
         content = props.get('content')
         if content:
-             body.append("## Content")
+             # Just append the content directly without wrapping it in "## Content"
+             # This allows full markdown documents to be synched properly.
              body.append(content)
              body.append("")
          
         return "\n".join(fm_lines + body)
 
+    def extract_body_from_markdown(self, file_path: str) -> str:
+        """
+        Extracts the body (text after frontmatter) from an existing markdown file.
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Simple Frontmatter extraction
+            if content.startswith("---"):
+                parts = content.split("---", 2)
+                if len(parts) >= 3:
+                    return parts[2].strip()
+            return content
+        except Exception:
+            return ""
+
     def sync_node(self, uid: str, sync_connected: bool = False):
         """
         Full Sync: Fetch -> Render -> Write.
         If sync_connected is True, also syncs nodes directly connected to this one.
+        
+        SAFE MODE: If file exists and Neo4j 'content' is empty, preserve existing file body.
         """
         node_data = self.fetch_node(uid)
         if not node_data:
@@ -225,6 +246,29 @@ class GraphSync:
         os.makedirs(dir_path, exist_ok=True)
 
         file_path = os.path.join(dir_path, safe_filename)
+        
+        # === CONTENT MERGE STRATEGY ===
+        # Priority 1: Content from Neo4j (if exists)
+        # Priority 2: Existing Body from File (if Neo4j content is empty)
+        # Priority 3: Description from Neo4j
+        
+        db_content = node_data['props'].get('content')
+        existing_body = ""
+        
+        if os.path.exists(file_path):
+             existing_body = self.extract_body_from_markdown(file_path)
+        
+        if db_content:
+            # DB has authority
+            pass 
+        elif existing_body:
+            # DB is empty, but file has content -> Preserve file content
+            # We inject it into node_data temporarily for rendering
+            # Note: We append it as 'content' property to be handled by render_markdown
+            node_data['props']['content'] = existing_body
+            # Also ensure we don't double-h3 title if body already has it.
+            # render_markdown handles 'content' by appending it.
+        
         content = self.render_markdown(node_data)
 
         with open(file_path, 'w', encoding='utf-8') as f:

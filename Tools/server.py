@@ -4,6 +4,7 @@ from db_config import get_driver, WORKSPACE_ROOT
 from graph_sync import GraphSync
 import os
 import re
+import sys
 
 # Initialize MCP Server
 mcp = Server("graph-native-core")
@@ -360,6 +361,18 @@ async def list_tools() -> list[types.Tool]:
                 },
                 "required": ["source_uid", "target_uid", "rel_type"]
             }
+        ),
+        types.Tool(
+            name="register_task",
+            description="Registers a new Task from Human's chat message. ALL CONTENT MUST BE IN RUSSIAN.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "Task title in Russian"},
+                    "description": {"type": "string", "description": "Task description in Russian"}
+                },
+                "required": ["title"]
+            }
         )
     ]
 
@@ -385,6 +398,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "link_nodes": return await tool_link_nodes(arguments)
     elif name == "delete_node": return await tool_delete_node(arguments)
     elif name == "delete_link": return await tool_delete_link(arguments)
+    elif name == "register_task": return await tool_register_task(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
 async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
@@ -484,6 +498,85 @@ async def tool_link_nodes(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text=f"✅ Linked {source} -[:{rel_type}]-> {target}.\nMarkdown files updated.")]
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error linking nodes: {e}")]
+
+async def tool_register_task(arguments: dict) -> list[types.TextContent]:
+    """
+    Registers a new Task node from Human's chat message.
+    Task nodes are NOT linked automatically — the agent decides where to connect them.
+    """
+    title = arguments.get("title")
+    desc = arguments.get("description", "")
+    
+    # 1. ENFORCE HARD PHYSICS (Russian Language + No WikiLinks)
+    try:
+        validate_physics_constraints(title)
+        if desc:
+            validate_physics_constraints(desc)
+    except ValueError as e:
+        return [types.TextContent(type="text", text=f"❌ {str(e)}")]
+    
+    # 2. Transliteration for Safe UIDs
+    def transliterate(text):
+        mapping = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+            'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+            'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+            'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
+            'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+            'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'YO',
+            'Ж': 'ZH', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+            'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+            'Ф': 'F', 'Х': 'H', 'Ц': 'TS', 'Ч': 'CH', 'Ш': 'SH', 'Щ': 'SCH', 'Ъ': '',
+            'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'YU', 'Я': 'YA',
+        }
+        return "".join([mapping.get(char, char) for char in text])
+
+    transliterated_title = transliterate(title)
+    safe_title = re.sub(r'[^a-zA-Z0-9]', '_', transliterated_title).strip('_').upper()
+    uid = f"TASK-{safe_title[:40]}"
+    
+    driver = get_driver()
+    
+    # 3. Create Task node (without automatic linking)
+    query_create = """
+    MERGE (n:Task {uid: $uid})
+    SET n.title = $title,
+        n.description = $desc,
+        n.status = 'Registered',
+        n.created_at = datetime()
+    RETURN n.uid as uid
+    """
+    
+    try:
+        # Generate Semantic Embedding
+        semantic_text = f"{title} {desc}"
+        embedding = emb_manager.get_embedding(semantic_text)
+
+        driver.execute_query(query_create, {
+            "uid": uid,
+            "title": title,
+            "desc": desc
+        }, database_="neo4j")
+        
+        # Save Embedding if successful
+        if embedding:
+            driver.execute_query(
+                "MATCH (n {uid: $uid}) SET n.embedding = $emb",
+                {"uid": uid, "emb": embedding},
+                database_="neo4j"
+            )
+
+        # Sync new node to Markdown
+        file_path = sync_tool.sync_node(uid, sync_connected=False)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"✅ Registered Task {uid}.\nSynced to Obsidian: {file_path}\n\n💡 Tip: Use link_nodes to connect this Task to a Spec or Requirement."
+        )]
+        
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error registering task: {e}")]
+
 
 async def tool_look_for_similar(arguments: dict) -> list[types.TextContent]:
     query_text = arguments.get("query")

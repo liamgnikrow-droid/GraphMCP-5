@@ -274,9 +274,93 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
         # Sync new node AND parent (because parent now has a new connection)
         file_path = sync_tool.sync_node(uid, sync_connected=True)
         
+        # === IMPACT ANALYSIS ===
+        impact_report = []
+        impact_report.append(f"✅ **СОЗДАНО:** (:{c_type} {{uid: '{uid}'}})")
+        impact_report.append(f"   Title: {title}")
+        impact_report.append(f"   Synced to: {file_path}\n")
+        
+        # 1. Check for semantically similar nodes (possible duplicates)
+        if embedding:
+            impact_report.append("🔍 **СЕМАНТИЧЕСКИ БЛИЗКИЕ НОДЫ** (возможные дубликаты)")
+            
+            similar_query = """
+            MATCH (n)
+            WHERE n.embedding IS NOT NULL AND n.uid <> $new_uid
+                AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+            WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $emb[i]) as score
+            WHERE score > 0.6
+            RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
+            ORDER BY score DESC LIMIT 3
+            """
+            
+            similar_rec, _, _ = driver.execute_query(
+                similar_query, 
+                {"new_uid": uid, "emb": embedding}, 
+                database_="neo4j"
+            )
+            
+            if similar_rec:
+                for s in similar_rec:
+                    stype = s["type"]
+                    suid = s["uid"]
+                    stitle = s.get("title", "N/A")
+                    score = s["score"]
+                    impact_report.append(f"   ⚠️  [{stype}] {suid}: {stitle} (Similarity: {score:.3f})")
+                impact_report.append("   💡 Проверьте, не дубликат ли это\n")
+            else:
+                impact_report.append("   (Нет похожих нод)\n")
+        
+        # 2. Show applied Constraints
+        impact_report.append("⚠️ **ПРИМЕНЁННЫЕ CONSTRAINTS**")
+        constraints_query = """
+        MATCH (c:Constraint)
+        RETURN c.uid as uid, c.rule_name as rule_name
+        """
+        constraints_rec, _, _ = driver.execute_query(constraints_query, database_="neo4j")
+        
+        if constraints_rec:
+            for c in constraints_rec:
+                cuid = c["uid"]
+                crule = c.get("rule_name", "N/A")
+                impact_report.append(f"   ✓ {cuid}: {crule}")
+        impact_report.append("")
+        
+        # 3. Show parent link
+        impact_report.append("🔗 **АВТОМАТИЧЕСКИЕ СВЯЗИ**")
+        parent_query = "MATCH (p {uid: $parent_uid}) RETURN p.title as title, labels(p)[0] as type"
+        parent_rec, _, _ = driver.execute_query(parent_query, {"parent_uid": parent_uid}, database_="neo4j")
+        
+        if parent_rec:
+            ptype = parent_rec[0]["type"]
+            ptitle = parent_rec[0].get("title", "N/A")
+            impact_report.append(f"   (:{ptype} {{uid: '{parent_uid}'}}) -[:DECOMPOSES]-> (:{c_type} {{uid: '{uid}'}})")
+            impact_report.append(f"   Parent: {ptitle}\n")
+        
+        # 4. Show related Specs/Requirements in vicinity
+        impact_report.append("📋 **ЗАТРОНУТЫЕ ОБЛАСТИ ГРАФА**")
+        related_query = """
+        MATCH path = (new {uid: $uid})-[:DECOMPOSES*1..2]-(related)
+        WHERE related:Spec OR related:Requirement
+        RETURN DISTINCT related.uid as uid, related.title as title, labels(related)[0] as type
+        LIMIT 5
+        """
+        related_rec, _, _ = driver.execute_query(related_query, {"uid": uid}, database_="neo4j")
+        
+        if related_rec:
+            for r in related_rec:
+                rtype = r["type"]
+                ruid = r["uid"]
+                rtitle = r.get("title", "N/A")
+                impact_report.append(f"   • [{rtype}] {ruid}: {rtitle}")
+        else:
+            impact_report.append("   (Нет связанных Specs/Requirements)")
+        
+        impact_text = "\n".join(impact_report)
+        
         return [types.TextContent(
             type="text",
-            text=f"✅ Created {c_type} {uid} and linked to {parent_uid}.\nSynced to Obsidian: {file_path}"
+            text=impact_text
         )]
         
     except Exception as e:

@@ -2,15 +2,29 @@
 uid: "IDEA-Genesis"
 title: "Genesis Point"
 type: "Idea"
-tags: [graph/idea, state/draft]
+status: "unknown"
+tags: [graph/idea, state/unknown]
 cssclasses: [juggl-node, type-idea, premium-card]
 decomposes:
   - "[[IDEA-OLD_WORLD_LEGACY]]"
   - "[[SPEC-Bootstrap]]"
   - "[[SPEC-GRAPH_NATIVE_CONSTRAINTS]]"
+  - "[[TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU]]"
+  - "[[TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU]]"
+  - "[[TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU]]"
+  - "[[TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU]]"
   - "[[TASK-TASK_FROM_IDEA]]"
   - "[[TASK-TASK_FROM_IDEA]]"
 ---
+# Genesis Point
+
+> [!abstract] Idea Context
+> **ID:** `IDEA-Genesis` | **Status:** `unknown`
+
+## Description
+> [!abstract] Idea Context
+
+## Content
 # Genesis Point
 
 > [!abstract] Idea Context

@@ -250,26 +250,55 @@ class GraphSync:
         # === CONTENT MERGE STRATEGY ===
         # Priority 1: Content from Neo4j (if exists)
         # Priority 2: Existing Body from File (if Neo4j content is empty)
-        # Priority 3: Description from Neo4j
         
-        db_content = node_data['props'].get('content')
+        db_content = node_data['props'].get('content', "").strip()
         existing_body = ""
+        conflict_detected = False
         
         if os.path.exists(file_path):
-             existing_body = self.extract_body_from_markdown(file_path)
+             existing_body = self.extract_body_from_markdown(file_path).strip()
         
-        if db_content:
-            # DB has authority
-            pass 
-        elif existing_body:
-            # DB is empty, but file has content -> Preserve file content
-            # We inject it into node_data temporarily for rendering
-            # Note: We append it as 'content' property to be handled by render_markdown
+        if db_content and existing_body and db_content != existing_body:
+            # CONFLICT DETECTED
+            # We trust the local file more (User editing in Obsidian)
+            # But we must preserve DB version and flag it.
+            conflict_detected = True
+            node_data['props']['content'] = existing_body # Render with local content
+            
+        elif existing_body and not db_content:
+            # DB is empty, preserve file
             node_data['props']['content'] = existing_body
-            # Also ensure we don't double-h3 title if body already has it.
-            # render_markdown handles 'content' by appending it.
         
+        # Render
         content = self.render_markdown(node_data)
+        
+        # Handle Conflict Append
+        if conflict_detected:
+            content += "\n\n"
+            content += "## 🔄 SYNC CONFLICT: Database Version\n"
+            content += "> [!warning] Database content differs from local file.\n"
+            content += "> Below is the version from Neo4j Graph:\n\n"
+            content += db_content
+            
+            # Create BUG node in Graph
+            bug_uid = f"BUG-Conflict-{uid}"
+            print(f"⚠️  CONFLICT detected for {uid}. Creating {bug_uid}...")
+            
+            bug_query = """
+            MATCH (n {uid: $uid})
+            MERGE (b:Bug {uid: $bug_uid})
+            SET b.title = 'Sync Conflict: ' + $uid,
+                b.description = 'Content mismatch between Obsidian (Local) and Neo4j (DB). Please resolve in file.',
+                b.status = 'Open',
+                b.created_at = datetime()
+            MERGE (b)-[:RELATES_TO]->(n)
+            """
+            try:
+                drv = self.get_driver()
+                drv.execute_query(bug_query, {"uid": uid, "bug_uid": bug_uid}, database_="neo4j")
+                print(f"🐛 Created Bug: {bug_uid}")
+            except Exception as e:
+                print(f"❌ Failed to create conflict bug: {e}")
 
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)

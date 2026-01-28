@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -207,6 +206,10 @@
   },
   "active": "e9e6d7774b46b774",
   "lastOpenFiles": [
+    "2_Specs/SPEC-Test.md",
+    "2_Specs/SPEC-Bootstrap.md",
+    "2_Specs/SPEC-Graph_Physics.md",
+    "2_Specs/SPEC-GRAPH_NATIVE_CONSTRAINTS.md",
     "4_Requirements/REQUIREMENT-TRE_OVANIE__EZOPASNOSTI_API.md",
     "3_Tasks/TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU.md",
     "3_Tasks/TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU.md",
@@ -216,12 +219,9 @@
     "9_Unclassified",
     "3_Tasks/TASK-OPTIMIZIROVAT_ZAPROSY_K_BAZE_DANNYH.md",
     "3_Tasks/TASK-REALIZOVAT_AVTORIZATSIYU_POLZOVATELYA.md",
-    "2_Specs/SPEC-GRAPH_NATIVE_CONSTRAINTS.md",
-    "2_Specs/SPEC-Graph_Physics.md",
     "1_Ideas/IDEA-Genesis.md",
     "1_Ideas/IDEA-RussianTest.md",
     "1_Ideas/IDEA-OLD_WORLD_LEGACY.md",
-    "2_Specs/SPEC-Bootstrap.md",
     "1_Ideas/IDEA-TEST_NARUSHENIYA.md",
     "4_Requirements/REQ-YAML_LINKS_ONLY.md"
   ]

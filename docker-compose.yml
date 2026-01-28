@@ -1,0 +1,86 @@
+version: '3.8'
+name: graphmcp-5
+
+services:
+  # 1. СРЕДА РАЗРАБОТКИ (IDE + AGENT)
+  graphmcp-ide:
+    image: mcr.microsoft.com/devcontainers/typescript-node:18
+    init: true
+    volumes:
+      # --- IRON DOME CONFIGURATION ---
+      # 1. CODE ACCESS: RO (Iron Dome Enforced)
+      - ${PROJECT_ROOT}:/workspace:ro
+
+      # 1.1 SYSTEM TOOLS (Overlay for MCP bridge)
+      - ./mcp_client_adapter.js:/workspace/mcp_client_adapter.js:ro
+      - ./package.json:/workspace/package.json:ro
+
+      # 2. CONFIG HOLES
+      # Graph_Export is now RO for Agent (Core must write)
+      # .graphmcp state is RW (Agent brain)
+      - graphmcp_state:/workspace/.graphmcp:rw
+      - agent_data:/home/node/.antigravity:rw
+      - agent_gemini:/home/node/.gemini:rw
+      - vscode_state:/home/node/.vscode-server/data/Machine:rw
+      - vscode-server-extensions:/home/node/.vscode-server/extensions:rw
+
+    # FIX PERMISSIONS
+    command: /bin/sh -c "sudo chown -R node:node /workspace/.graphmcp /home/node/.antigravity /home/node/.gemini /home/node/.vscode-server && sleep infinity"
+
+    networks:
+      - frontend-net  # <--- ONLY Frontend (Can talk to Core, but NOT DB)
+
+  # 2. ORCHESTRATOR CORE (MCP SERVER)
+  graphmcp-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    init: true
+    volumes:
+      - ${PROJECT_ROOT}:/workspace:rw # Core has RW to write Graph_Export
+      - ./Graph_Physics:/workspace/Graph_Physics:ro
+      - ./Tools:/opt/tools:ro
+    environment:
+      - NEO4J_URI=bolt://neo4j-db:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - WORKSPACE_ROOT=/workspace
+      - PYTHONPATH=/opt/tools
+    command: [ "python", "/opt/tools/server.py" ]
+    ports:
+      - "8000:8000"
+    networks:
+      - frontend-net # Talk to IDE
+      - backend-net  # Talk to DB
+    depends_on:
+      - neo4j-db
+
+  # 3. KNOWLEDGE GRAPH (NEO4J)
+  neo4j-db:
+    image: neo4j:5.15.0
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*
+      - NEO4J_dbms_security_procedures_allowlist=gds.*
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+    networks:
+      - backend-net # <--- ONLY Backend
+
+networks:
+  frontend-net:
+    internal: false
+  backend-net:
+    internal: true # No external access usually required, but we keep ports exposed for host debugging
+
+volumes:
+  neo4j-data:
+  vscode-server-extensions:
+  agent_data:
+  agent_gemini:
+  vscode_state:
+  graphmcp_state:

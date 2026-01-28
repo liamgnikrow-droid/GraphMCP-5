@@ -1,0 +1,24 @@
+# Используем легкий Python образ
+FROM python:3.11-slim
+
+# Установим рабочую директорию
+WORKDIR /workspace
+
+# Установка системных зависимостей (если нужны для Neo4j драйвера или Git)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем файл зависимостей (предполагаем, что он есть в корне)
+# Если его нет, создадим базовый
+COPY requirements.txt .
+
+# Установка Python библиотек
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Открываем порт для MCP (SSE transport)
+EXPOSE 8000
+
+# Команда по умолчанию: запуск сервера
+# ВНИМАНИЕ: Путь к скрипту может отличаться, нужно уточнить где лежит server.py
+CMD ["python", "Tools/server.py"]

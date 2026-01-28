@@ -1,0 +1,9 @@
+fastapi>=0.109.0
+uvicorn>=0.27.0
+mcp
+neo4j>=5.17.0
+pydantic>=2.6.0
+python-dotenv>=1.0.1
+aiofiles>=23.2.1
+networkx>=3.2.1
+

@@ -1,0 +1,271 @@
+/* For a full overview of styling options, see https://js.cytoscape.org/#style */
+
+/* DEFAULT EDGE - Fallback */
+edge {
+    line-color: #ccc;
+    target-arrow-color: #ccc;
+    target-arrow-shape: triangle;
+    width: 1;
+    curve-style: straight;
+    opacity: 0.8;
+}
+
+/* 0. TECHNICAL TYPE */
+
+/* RELATED_TO: Dotted, Gray */
+edge[type="RELATED_TO"],
+edge[label="RELATED_TO"],
+edge.type-related_to,
+edge.related_to {
+    line-color: #B0BEC5;
+    target-arrow-color: #B0BEC5;
+    width: 1;
+    line-style: dotted;
+}
+
+/* 1. IMPLEMENTS (Green) */
+edge[type="IMPLEMENTS"],
+edge[label="IMPLEMENTS"],
+edge[type="implementation"],
+edge[label="implementation"],
+edge.type-implements,
+edge.type-implementation,
+edge.implements,
+edge.implementation {
+    line-color: #81C784;
+    target-arrow-color: #81C784;
+    target-arrow-shape: triangle;
+    width: 2;
+    curve-style: straight;
+}
+
+/* 2. DEPENDS_ON (Blue) */
+edge[type="DEPENDS_ON"],
+edge[label="DEPENDS_ON"],
+edge[type="dependency"],
+edge[label="dependency"],
+edge.type-dependency,
+edge.type-depends_on,
+edge.dependency,
+edge.depends_on {
+    line-color: #64B5F6;
+    target-arrow-color: #64B5F6;
+    target-arrow-shape: triangle;
+    width: 2;
+    curve-style: straight;
+}
+
+/* 3. DECOMPOSES (Orange/Yellow - Hierarchy) */
+edge[type="DECOMPOSES"],
+edge[label="DECOMPOSES"],
+edge[type="decomposition"],
+edge[label="decomposition"],
+edge.type-decomposes,
+edge.type-decomposition,
+edge.decomposes,
+edge.decomposition {
+    line-color: #FFB74D;
+    line-style: dashed;
+    target-arrow-color: #FFB74D;
+    target-arrow-shape: triangle;
+    width: 2;
+    curve-style: straight;
+}
+
+/* 4. CONFLICT (Red) */
+edge[type="CONFLICT"],
+edge[label="CONFLICT"],
+edge[type="conflict"],
+edge[label="conflict"],
+edge.type-conflicts,
+edge.type-conflict,
+edge.conflicts,
+edge.conflict {
+    line-color: #EF5350;
+    target-arrow-color: #EF5350;
+    target-arrow-shape: triangle;
+    width: 2;
+    curve-style: straight;
+}
+
+/* 5. IMPORTS (Purple - Phase 3.1.4) */
+edge[type="IMPORTS"],
+edge[label="IMPORTS"],
+edge.type-imports,
+edge.imports {
+    line-color: #AB47BC;
+    target-arrow-color: #AB47BC;
+    target-arrow-shape: triangle;
+    width: 1.5;
+    line-style: dashed;
+    curve-style: straight;
+}
+
+/* NODES */
+
+/* Code: Files (Deep Blue, Largest) */
+node.tag-kind-code,
+node.kind-code,
+node[kind="code"],
+node[id ^="Code/"],
+node[path ^="Code/"],
+node[type="File"] {
+    background-color: #1565C0;
+    border-color: #0D47A1;
+    width: 22px;
+    height: 22px;
+    shape: hexagon;
+}
+
+/* Code: Classes (Lighter Blue, Medium) */
+node[type="Class"] {
+    background-color: #42A5F5;
+    border-color: #1976D2;
+    width: 18px;
+    height: 18px;
+    shape: rectangle;
+}
+
+/* Code: Functions (Lightest Blue, Smallest) */
+node[type="Function"] {
+    background-color: #90CAF9;
+    border-color: #42A5F5;
+    width: 12px;
+    height: 12px;
+    shape: ellipse;
+}
+
+/* Module: Purple (Phase 3.1.4 - Import tracking) */
+node[type="Module"],
+node.type-module {
+    background-color: #7E57C2;
+    border-color: #4527A0;
+    border-width: 2px;
+    shape: ellipse;
+}
+
+/* Pain Points: Red */
+node.tag-PainPoints,
+node[type *="Pain Points"],
+node[label *="Pain Points"],
+node[id *="Pain Points"],
+node[tag="#PainPoints"] {
+    background-color: #EF5350;
+    border-color: #B71C1C;
+}
+
+/* Requirements: Orange-Yellow (Overrides Code if it overlaps) */
+node.tag-Requirements,
+node.tag-graph-requirement,
+node.type-requirement,
+node[type="Requirement"],
+node[type="Requirements"],
+node[uid *="REQ-"],
+node[uid *="REQ_"],
+node[id *="REQ-"],
+node[id *="REQ_"],
+node[label *="REQ-"],
+node[label *="REQ_"],
+node[tag="#Requirements"] {
+    background-color: #FFA726;
+    border-color: #EF6C00;
+    width: 18px;
+    height: 18px;
+    shape: round-hexagon;
+}
+
+/* Domain Entities: Green */
+node.tag-DomainEntities,
+node.tag-graph-domain,
+node.type-domain,
+node[type="Domain"],
+node[type="Domain Entities"],
+node[uid *="DOMAIN-"],
+node[uid *="DOMAIN_"],
+node[id *="Domain"],
+node[label *="DOMAIN"],
+node[tag="#DomainEntities"] {
+    background-color: #66BB6A;
+    border-color: #2E7D32;
+    width: 20px;
+    height: 20px;
+    shape: ellipse;
+}
+
+/* Specs: Teal (Blueprint) */
+node.tag-graph-spec,
+node.type-spec,
+node[type="Spec"],
+node[type="Specification"],
+node[uid *="SPEC-"],
+node[uid *="SPEC_"],
+node[id *="SPEC-"],
+node[id *="SPEC_"] {
+    background-color: #4DB6AC;
+    border-color: #00796B;
+    shape: round-rectangle;
+    width: 20px;
+    height: 15px;
+}
+
+/* Ideas: Light Amber (Vision) */
+node.tag-graph-idea,
+node.type-idea,
+node[type="Idea"],
+node[uid *="IDEA-"],
+node[uid *="IDEA_"],
+node[id *="IDEA-"],
+node[id *="IDEA_"] {
+    background-color: #FF40FF;
+    border-color: #FBC02D;
+    shape: round-rectangle;
+    width: 32px;
+    height: 32px;
+}
+
+/* Tasks: Indigo (Work) */
+node.tag-graph-task,
+node.type-task,
+node[type="Task"],
+node[uid *="TASK-"],
+node[uid *="TASK_"],
+node[id *="TASK-"],
+node[id *="TASK_"] {
+    background-color: #7986CB;
+    border-color: #303F9F;
+    shape: round-rectangle;
+}
+
+/* Goals: Gold - v2.7: TASK-501 Vision Layer */
+node[id *="GOAL-"],
+node[label *="GOAL-"],
+node.kind-goal,
+node[kind="goal"] {
+    background-color: #FFD700;
+    border-color: #FFA500;
+    border-width: 3px;
+    width: 30px;
+    height: 30px;
+    shape: hexagon;
+    font-weight: bold;
+}
+
+/* Epic: Deep Gold - Phase 3.1.4+: High-level initiatives */
+node[type="Epic"],
+node.type-epic,
+node.tag-graph-epic,
+node[uid *="EPIC-"],
+node[uid *="EPIC_"],
+node[id *="EPIC-"],
+node[id *="EPIC_"],
+node[label *="EPIC-"],
+node[label *="EPIC_"] {
+    background-color: #FFA500;
+    border-color: #FF8C00;
+    border-width: 4px;
+    width: 35px;
+    height: 35px;
+    shape: hexagon;
+    font-weight: bold;
+    font-size: 14px;
+}

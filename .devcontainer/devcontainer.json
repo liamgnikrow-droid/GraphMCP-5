@@ -1,0 +1,29 @@
+{
+    "name": "GraphMCP Iron Dome",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "graphmcp-ide",
+    "workspaceFolder": "/workspace",
+    // Настройки, которые применятся к VS Code ВНУТРИ контейнера
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "files.watcherExclude": {
+                    "**/.git/objects/**": true,
+                    "**/.git/subtree-cache/**": true,
+                    "**/node_modules/**": true
+                }
+            }
+        }
+    },
+    // После создания контейнера можно выполнить команды (например, установить npm пакеты)
+    // Но так как у нас Read-Only, нам придется делать это хитро (или не делать вовсе тут)
+    // AVTO-FIX: При старте чиним права на папки (так как Docker создает их как root)
+    "postStartCommand": "sudo chown -R node:node /home/node/.antigravity /home/node/.gemini /home/node/.vscode-server"
+}

@@ -1,0 +1,10 @@
+{
+    "name": "graphmcp-client-adapter",
+    "version": "1.0.0",
+    "description": "SSE to stdio adapter for MCP GraphMCP server",
+    "main": "mcp_client_adapter.js",
+    "dependencies": {
+        "eventsource": "^2.0.2",
+        "node-fetch": "^2.7.0"
+    }
+}

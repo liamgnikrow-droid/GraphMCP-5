@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+        "graph-native-core": {
+            "command": "node",
+            "args": [
+                "/workspace/mcp_client_adapter.js"
+            ],
+            "env": {
+                "MCP_SSE_URL": "http://graphmcp-core:8000/sse",
+                "NODE_PATH": "/usr/local/share/npm-global/lib/node_modules"
+            }
+        }
+    }
+}

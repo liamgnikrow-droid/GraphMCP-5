@@ -12,9 +12,34 @@ mcp = Server("graph-native-core")
 sync_tool = GraphSync()
 
 # --- PHASE 8: MULTI-PROJECT STATE ---
-# By default, we start in 'graphmcp' project (the documentation itself)
-ACTIVE_PROJECT_ID = "graphmcp"
-ACTIVE_PROJECT_ROOT = WORKSPACE_ROOT
+STATE_FILE = os.path.join(os.path.dirname(__file__), ".active_project_state")
+
+def load_project_state():
+    """Loads active project state from file persistence."""
+    default_state = {"id": "graphmcp", "root": WORKSPACE_ROOT}
+    try:
+        import json
+        if os.path.exists(STATE_FILE):
+            with open(STATE_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Failed to load project state: {e}", file=sys.stderr)
+    return default_state
+
+def save_project_state(project_id, project_root):
+    """Persists active project state."""
+    try:
+        import json
+        with open(STATE_FILE, 'w') as f:
+            json.dump({"id": project_id, "root": project_root}, f)
+    except Exception as e:
+        print(f"⚠️ Failed to save project state: {e}", file=sys.stderr)
+
+# Initialize State
+_initial_state = load_project_state()
+ACTIVE_PROJECT_ID = _initial_state["id"]
+ACTIVE_PROJECT_ROOT = _initial_state["root"]
+print(f"🚀 ACTIVE PROJECT: {ACTIVE_PROJECT_ID} (Root: {ACTIVE_PROJECT_ROOT})", file=sys.stderr)
 
 def get_current_project_id():
     return ACTIVE_PROJECT_ID
@@ -26,11 +51,8 @@ def set_current_project(project_id: str, project_root: str):
     global ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT
     ACTIVE_PROJECT_ID = project_id
     ACTIVE_PROJECT_ROOT = project_root
+    save_project_state(project_id, project_root)
     
-    # Update SyncTool paths
-    # Note: GraphSync needs to be updated to respect dynamic roots!
-    # For now we assume WORKSPACE_ROOT in db_config is global base, 
-    # but we will need to refactor GraphSync to accept root param.
     print(f"🔄 Switched to project: {ACTIVE_PROJECT_ID} at {ACTIVE_PROJECT_ROOT}", file=sys.stderr)
 
 # --- EMBEDDING MANAGER (LIGHTWEIGHT) ---

@@ -187,14 +187,16 @@ core (БД)                    project_X (БД)
 ### 8.2 Реализация
 
 - [ ] **8.2.1** Создать БД `core` в Neo4j
-- [ ] **8.2.2** Перенести мета-граф (NodeType, Action, Constraint) в `core`
-- [ ] **8.2.3** Модифицировать server.py:
-  - [ ] `CORE_DB = "core"` (константа)
-  - [ ] `PROJECT_DB` из .env или switch_project
-  - [ ] Все запросы указывают правильную БД
-- [ ] **8.2.4** Обновить bootstrap_metagraph.py для работы с `core`
+### 8.2 Реализация (ГОТОВО)
 
-### 8.3 Инструменты управления проектами
+- [x] **8.2.1** Адаптировать архитектуру под Neo4j Community (Logical Isolation)
+- [x] **8.2.2** Разделить мета-граф (Global) и данные (Project-based)
+- [x] **8.2.3** Модифицировать server.py:
+  - [x] `ACTIVE_PROJECT_ID` (state management)
+  - [x] `persistence` (.active_project_state)
+  - [x] Фильтрация запросов (`WHERE n.project_id = ...`)
+
+### 8.3 Инструменты управления проектами (В РАБОТЕ)
 
 - [x] **8.3.1** `switch_project(name, root)`
   - Переключает контекст на другой проект

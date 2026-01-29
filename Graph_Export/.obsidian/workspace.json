@@ -206,10 +206,11 @@
   },
   "active": "e9e6d7774b46b774",
   "lastOpenFiles": [
+    "4_Requirements/REQUIREMENT-TRE_OVANIE_AVTORIZATSII_POLZOVATELEY.md",
+    "2_Specs/SPEC-GRAPH_NATIVE_CONSTRAINTS.md",
+    "2_Specs/SPEC-Graph_Physics.md",
     "2_Specs/SPEC-Test.md",
     "2_Specs/SPEC-Bootstrap.md",
-    "2_Specs/SPEC-Graph_Physics.md",
-    "2_Specs/SPEC-GRAPH_NATIVE_CONSTRAINTS.md",
     "4_Requirements/REQUIREMENT-TRE_OVANIE__EZOPASNOSTI_API.md",
     "3_Tasks/TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU.md",
     "3_Tasks/TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU.md",

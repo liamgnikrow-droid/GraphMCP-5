@@ -2,6 +2,7 @@ from mcp.server import Server
 import mcp.types as types
 from db_config import get_driver, WORKSPACE_ROOT
 from graph_sync import GraphSync
+import constraint_primitives as primitives
 import os
 import re
 import sys
@@ -174,6 +175,123 @@ async def tool_move_to(arguments: dict) -> list[types.TextContent]:
     except Exception as e:
         return [types.TextContent(type="text", text=f"Error moving agent: {e}")]
 
+
+def check_constraints(action_uid: str, context: dict) -> tuple[bool, list[str]]:
+    """
+    PHASE 3: Centralized Constraint Middleware
+    
+    Checks all Constraints from Meta-Graph that RESTRICT the given action.
+    
+    Args:
+        action_uid: UID of the Action being performed (e.g. 'ACT-create_spec')
+        context: Dictionary with contextual data:
+            - 'text': content being validated (for cyrillic_ratio, regex_match)
+            - 'target_type': type of node being created (for node_count cardinality checks)
+            - 'uid': UID of current node (for not_equals self-deletion check)
+            
+    Returns:
+        (passed: bool, violations: list[str])
+        - passed: True if all constraints pass
+        - violations: List of error messages for failed constraints
+    """
+    driver = get_driver()
+    violations = []
+    
+    # Fetch all Constraints that RESTRICT this action
+    query = """
+    MATCH (c:Constraint)-[:RESTRICTS]->(a:Action)
+    WHERE a.uid = $action_uid OR a.tool_name IN $tool_names
+    RETURN DISTINCT c.uid as uid, 
+           c.rule_name as rule_name, 
+           c.error_message as error_message,
+           c.function as function,
+           c.operator as operator,
+           c.threshold as threshold,
+           c.pattern as pattern,
+           c.target_label as target_label
+    """
+    
+    # Also match by tool_name for flexibility
+    tool_name = context.get('tool_name')
+    tool_names = [tool_name] if tool_name else []
+    
+    try:
+        records, _, _ = driver.execute_query(
+            query, 
+            {"action_uid": action_uid, "tool_names": tool_names}, 
+            database_="neo4j"
+        )
+    except Exception as e:
+        # If constraint loading fails, we FAIL SAFE (block action)
+        return False, [f"Failed to load constraints: {e}"]
+    
+    # Deduplicate by constraint UID (to avoid checking same constraint multiple times)
+    seen_constraints = set()
+    
+    for record in records:
+        constraint_uid = record['uid']
+        
+        # Skip if already checked
+        if constraint_uid in seen_constraints:
+            continue
+        seen_constraints.add(constraint_uid)
+        
+        rule_name = record['rule_name']
+        error_message = record['error_message']
+        function = record.get('function')
+        operator = record.get('operator')
+        threshold = record.get('threshold')
+        pattern = record.get('pattern')
+        target_label = record.get('target_label')
+        
+        # Apply the appropriate primitive
+        try:
+            if function == 'cyrillic_ratio':
+                text = context.get('text', '')
+                ratio = primitives.cyrillic_ratio(text)
+                # threshold = 0.25, operator = '>='
+                if threshold is not None:
+                    if operator == '<' and ratio < threshold:
+                        violations.append(error_message or f"{rule_name}: Cyrillic ratio {ratio:.2f} < {threshold}")
+                    elif operator == '>=' and ratio < threshold:
+                        violations.append(error_message or f"{rule_name}: Cyrillic ratio {ratio:.2f} < {threshold}")
+                        
+            elif function == 'regex_match':
+                text = context.get('text', '')
+                if pattern and primitives.regex_match(text, pattern):
+                    violations.append(error_message or f"{rule_name}: Pattern '{pattern}' found in text")
+                    
+            elif function == 'node_count':
+                # IMPORTANT: Use target_label from Constraint, not from context
+                # Example: CON-One_Spec has target_label='Spec'
+                # We only check this if context['target_type'] matches target_label
+                if target_label:
+                    context_target = context.get('target_type')
+                    
+                    # Only apply this constraint if we're creating a node of this type
+                    if context_target == target_label:
+                        count = primitives.node_count(driver, target_label)
+                        # threshold = 1, operator = '>='
+                        if threshold is not None and operator:
+                            if primitives.compare(count, operator, threshold):
+                                violations.append(error_message or f"{rule_name}: {target_label} count {count} {operator} {threshold}")
+                            
+            elif function == 'not_equals':
+                # For preventing self-deletion
+                current_uid = context.get('current_uid')
+                target_uid = context.get('target_uid')
+                if current_uid and target_uid:
+                    if not primitives.not_equals(current_uid, target_uid):
+                        violations.append(error_message or f"{rule_name}: Cannot operate on self")
+                        
+        except Exception as e:
+            violations.append(f"{rule_name}: Error applying constraint - {e}")
+    
+    passed = len(violations) == 0
+    return passed, violations
+
+
+
 def validate_physics_constraints(text: str):
     """
     Enforces 'Hard Physics' rules on content.
@@ -205,12 +323,22 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
     title = arguments.get("title")
     desc = arguments.get("description", "")
     
-    # 1. ENFORCE HARD PHYSICS
-    try:
-        validate_physics_constraints(title)
-        validate_physics_constraints(desc)
-    except ValueError as e:
-        return [types.TextContent(type="text", text=f"❌ {str(e)}")]
+    # 1. ENFORCE HARD PHYSICS via Centralized Constraint Middleware
+    combined_text = f"{title} {desc}"
+    context = {
+        "text": combined_text,
+        "target_type": c_type,
+        "tool_name": "create_concept"
+    }
+    
+    passed, violations = check_constraints(action_uid=None, context=context)
+    
+    if not passed:
+        violation_msg = "\n".join(f"  • {v}" for v in violations)
+        return [types.TextContent(
+            type="text", 
+            text=f"❌ **CONSTRAINT VIOLATION**\n\n{violation_msg}"
+        )]
     
     # Transliteration for Safe UIDs
     def transliterate(text):
@@ -635,13 +763,22 @@ async def tool_register_task(arguments: dict) -> list[types.TextContent]:
     title = arguments.get("title")
     desc = arguments.get("description", "")
     
-    # 1. ENFORCE HARD PHYSICS (Russian Language + No WikiLinks)
-    try:
-        validate_physics_constraints(title)
-        if desc:
-            validate_physics_constraints(desc)
-    except ValueError as e:
-        return [types.TextContent(type="text", text=f"❌ {str(e)}")]
+    # 1. ENFORCE HARD PHYSICS via Centralized Constraint Middleware
+    combined_text = f"{title} {desc}"
+    context = {
+        "text": combined_text,
+        "target_type": "Task",
+        "tool_name": "register_task"
+    }
+    
+    passed, violations = check_constraints(action_uid="ACT-register_task", context=context)
+    
+    if not passed:
+        violation_msg = "\n".join(f"  • {v}" for v in violations)
+        return [types.TextContent(
+            type="text", 
+            text=f"❌ **CONSTRAINT VIOLATION**\n\n{violation_msg}"
+        )]
     
     # 2. Transliteration for Safe UIDs
     def transliterate(text):

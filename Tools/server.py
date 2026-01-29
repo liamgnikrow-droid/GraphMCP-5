@@ -226,10 +226,11 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
         output_parts.append(f"   • {c['name']}: {c['msg'][:60]}...")
     output_parts.append("")
     
-    # === 5. RELATED REQUIREMENTS (2 hops) ===
+    # === 5. RELATED REQUIREMENTS (2 hops) with description ===
     req_query = """
     MATCH (n {uid: $uid})-[*1..2]-(r:Requirement)
-    RETURN DISTINCT r.uid as uid, r.title as title
+    RETURN DISTINCT r.uid as uid, r.title as title, 
+           SUBSTRING(COALESCE(r.description, ''), 0, 100) as desc
     LIMIT 5
     """
     req_rec, _, _ = driver.execute_query(req_query, {"uid": loc_uid}, database_="neo4j")
@@ -237,7 +238,13 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
     if req_rec:
         output_parts.append("📋 **RELATED REQUIREMENTS** (within 2 hops)")
         for r in req_rec:
-            output_parts.append(f"   • {r['uid']}: {r['title']}")
+            title = r['title'] or r['uid']
+            desc = r['desc']
+            if desc:
+                output_parts.append(f"   • **{r['uid']}**: \"{title}\"")
+                output_parts.append(f"     ↳ {desc}...")
+            else:
+                output_parts.append(f"   • **{r['uid']}**: {title}")
         output_parts.append("")
     
     # === 6. GRAPH STATS ===

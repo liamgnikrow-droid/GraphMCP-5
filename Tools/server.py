@@ -6,6 +6,13 @@ import constraint_primitives as primitives
 import os
 import re
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from code_mapper import CodeMapper
+except ImportError:
+    # Fallback to prevent crash if file not found immediately
+    CodeMapper = None
+    print("⚠️ Warning: CodeMapper module not found.", file=sys.stderr)
 
 # Initialize MCP Server
 mcp = Server("graph-native-core")
@@ -868,6 +875,15 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="map_codebase",
+            description="Scans the active project codebase to create Graph nodes (File, Class, Function). Use this to keep the Graph in sync with Reality.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        ),
+        types.Tool(
             name="read_node",
             description="Reads the FULL content of a node by UID. Returns title, description, and body text. Use to understand what a node contains before making decisions.",
             inputSchema={
@@ -930,6 +946,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "read_node": return await tool_read_node(arguments)
     elif name == "switch_project": return await tool_switch_project(arguments)
     elif name == "set_workflow": return await tool_set_workflow(arguments)
+    elif name == "map_codebase": return await tool_map_codebase(arguments)
     elif name == "illuminate_path": return await tool_illuminate_path(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
@@ -1875,6 +1892,69 @@ async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:
     output_parts.append("   • Check available actions with look_around")
     
     return [types.TextContent(type="text", text="\n".join(output_parts))]
+
+
+async def tool_map_codebase(arguments: dict) -> list[types.TextContent]:
+    """
+    Scans the codebase of the ACTIVE project and creates File/Class/Function nodes.
+    """
+    if not CodeMapper:
+        return [types.TextContent(type="text", text="Error: CodeMapper module not loaded.")]
+        
+    project_id = get_current_project_id()
+    project_root = get_current_project_root()
+    
+    # Workflow Check (handled by middleware, but check here too)
+    
+    # Basic check
+    if not os.path.exists(project_root):
+        return [types.TextContent(type="text", text=f"Error: Project root '{project_root}' does not exist on disk.")]
+
+    try:
+        mapper = CodeMapper(project_root, project_id)
+        nodes, rels = mapper.scan()
+        
+        if not nodes:
+             return [types.TextContent(type="text", text=f"⚠️ No code found in '{project_root}'. Is the path correct?")]
+
+        # Batch Insert into Neo4j
+        driver = get_driver()
+        count_nodes = 0
+        count_rels = 0
+        
+        with driver.session(database="neo4j") as session:
+            # 1. Insert Nodes
+            for n in nodes:
+                 node_type = n["type"] # File, Class, Function (safe from internal mapper)
+                 # Dynamic Label Injection (Safe as type is controlled)
+                 query = f"""
+                 MERGE (n:{node_type} {{uid: $uid}})
+                 SET n.title = $title,
+                     n.project_id = $pid,
+                     n.path = $path,
+                     n.last_mapped = datetime()
+                 """
+                 session.run(query, {
+                     "uid": n["uid"], 
+                     "title": n["title"], 
+                     "pid": n["project_id"],
+                     "path": n.get("path", "")
+                 })
+                 count_nodes += 1
+                 
+            # 2. Insert Relationships
+            for source, rel, target in rels:
+                # Assuming simple rels mostly CONTAINS
+                query = f"""
+                MATCH (s {{uid: $s_uid}}), (t {{uid: $t_uid}})
+                MERGE (s)-[:{rel}]->(t)
+                """
+                session.run(query, {"s_uid": source, "t_uid": target})
+                count_rels += 1
+                
+        return [types.TextContent(type="text", text=f"✅ **CODEBASE MAPPED**\n\nProject: `{project_id}`\nNodes Created/Updated: {count_nodes}\nRelationships: {count_rels}")]
+    except Exception as e:
+         return [types.TextContent(type="text", text=f"❌ Error Mapping Codebase: {e}")]
 
 
 # --- SERVER ENTRYPOINT ---

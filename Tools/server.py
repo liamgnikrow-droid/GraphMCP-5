@@ -261,6 +261,10 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
     return [types.TextContent(type="text", text="\n".join(output_parts))]
 
 async def tool_move_to(arguments: dict) -> list[types.TextContent]:
+    """
+    Moves Agent to a neighbor node.
+    After successful move, automatically returns look_around context.
+    """
     target_uid = arguments.get("target_uid")
     driver = get_driver()
     if not driver: return [types.TextContent(type="text", text="Error: No Backend Connection")]
@@ -286,12 +290,22 @@ async def tool_move_to(arguments: dict) -> list[types.TextContent]:
     """
     try:
         driver.execute_query(move_query, {"uid": target_uid}, database_="neo4j")
+        
+        # 3. AUTO-REFRESH: Return look_around context for new location
+        # This is like a camera following the player in a game
+        look_result = await tool_look_around({})
+        
+        move_confirmation = f"✅ **MOVED TO:** {target_uid} ({target_type}: {target_title})\n"
+        move_confirmation += "=" * 50 + "\n\n"
+        
+        # Combine move confirmation with fresh context
         return [types.TextContent(
             type="text",
-            text=f"Agent moved to {target_uid} ({target_type}: {target_title})"
+            text=move_confirmation + look_result[0].text
         )]
     except Exception as e:
         return [types.TextContent(type="text", text=f"Error moving agent: {e}")]
+
 
 
 def check_constraints(action_uid: str, context: dict) -> tuple[bool, list[str]]:

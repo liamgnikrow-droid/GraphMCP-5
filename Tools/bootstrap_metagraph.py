@@ -39,6 +39,9 @@ CREATE (:Action {uid: 'ACT-move_to', tool_name: 'move_to', scope: 'global'});
 CREATE (:Action {uid: 'ACT-look_for_similar', tool_name: 'look_for_similar', scope: 'global'});
 CREATE (:Action {uid: 'ACT-explain_physics', tool_name: 'explain_physics', scope: 'global'});
 CREATE (:Action {uid: 'ACT-register_task', tool_name: 'register_task', scope: 'global'});
+CREATE (:Action {uid: 'ACT-read_node', tool_name: 'read_node', scope: 'global'});
+CREATE (:Action {uid: 'ACT-get_full_context', tool_name: 'get_full_context', scope: 'global'});
+CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'global'});
 
 // ===== КОНТЕКСТНЫЕ ДЕЙСТВИЯ =====
 // Idea может создавать только Spec
@@ -193,7 +196,7 @@ def verify_metagraph(driver):
     
     checks = [
         ("NodeType узлов", "MATCH (n:NodeType) RETURN count(n) as count", 5),
-        ("Action узлов", "MATCH (n:Action) RETURN count(n) as count", 14),
+        ("Action узлов", "MATCH (n:Action) RETURN count(n) as count", 17),  # +3: read_node, get_full_context, sync_graph
         ("Constraint узлов", "MATCH (n:Constraint) RETURN count(n) as count", 4),
         ("CAN_PERFORM связей", "MATCH ()-[r:CAN_PERFORM]->() RETURN count(r) as count", 24),  # 4 специфичных + 4 типа * 5 общих
         ("RESTRICTS связей", "MATCH ()-[r:RESTRICTS]->() RETURN count(r) as count", 9),  # 2 constraints * 4 create_concept + 1 CON-One_Spec

@@ -626,6 +626,17 @@ async def list_tools() -> list[types.Tool]:
                 },
                 "required": ["title"]
             }
+        ),
+        types.Tool(
+            name="read_node",
+            description="Reads the FULL content of a node by UID. Returns title, description, and body text. Use to understand what a node contains before making decisions.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "uid": {"type": "string", "description": "UID of the node to read (e.g., 'SPEC-Graph_Physics')"}
+                },
+                "required": ["uid"]
+            }
         )
     ]
 
@@ -655,6 +666,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "delete_link": return await tool_delete_link(arguments)
     elif name == "format_cypher": return await tool_format_cypher(arguments)
     elif name == "register_task": return await tool_register_task(arguments)
+    elif name == "read_node": return await tool_read_node(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
 async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
@@ -1240,6 +1252,109 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     full_text = "\n".join(context_parts)
     
     return [types.TextContent(type="text", text=full_text)]
+
+
+async def tool_read_node(arguments: dict) -> list[types.TextContent]:
+    """
+    Reads the FULL content of a node by UID.
+    Returns title, description, and body text.
+    
+    If content is not stored in Neo4j, attempts to read from Markdown file.
+    """
+    uid = arguments.get("uid")
+    if not uid:
+        return [types.TextContent(type="text", text="Error: uid is required")]
+    
+    driver = get_driver()
+    
+    # 1. Fetch node properties from Neo4j
+    query = """
+    MATCH (n {uid: $uid})
+    RETURN labels(n)[0] as type,
+           n.title as title,
+           n.description as description,
+           n.content as content,
+           n.status as status,
+           n.created_at as created_at
+    """
+    
+    try:
+        records, _, _ = driver.execute_query(query, {"uid": uid}, database_="neo4j")
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Error querying node: {e}")]
+    
+    if not records:
+        return [types.TextContent(type="text", text=f"❌ Node '{uid}' not found in graph")]
+    
+    record = records[0]
+    node_type = record.get("type", "Unknown")
+    title = record.get("title", "N/A")
+    description = record.get("description", "")
+    content = record.get("content", "")
+    status = record.get("status", "N/A")
+    created_at = record.get("created_at", "N/A")
+    
+    # 2. If content is empty, try to read from Markdown file
+    if not content:
+        # Determine file path based on type
+        TYPE_TO_FOLDER = {
+            "Idea": "1_Ideas",
+            "Spec": "2_Specs",
+            "Domain": "3_Domains",
+            "Requirement": "4_Requirements",
+            "Task": "5_Tasks",
+            "Bug": "6_Bugs"
+        }
+        subfolder = TYPE_TO_FOLDER.get(node_type, "9_Unclassified")
+        filename = f"{uid}.md".replace("/", "_").replace("\\", "_")
+        file_path = os.path.join(WORKSPACE_ROOT, "Graph_Export", subfolder, filename)
+        
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                
+                # Extract body (after frontmatter)
+                if file_content.startswith("---"):
+                    parts = file_content.split("---", 2)
+                    if len(parts) >= 3:
+                        content = parts[2].strip()
+                    else:
+                        content = file_content
+                else:
+                    content = file_content
+                    
+            except Exception as e:
+                content = f"(Error reading file: {e})"
+        else:
+            content = "(No content stored in database or file)"
+    
+    # 3. Format output
+    output_parts = []
+    output_parts.append(f"📖 **NODE: {uid}**")
+    output_parts.append(f"")
+    output_parts.append(f"**Type:** {node_type}")
+    output_parts.append(f"**Title:** {title}")
+    output_parts.append(f"**Status:** {status}")
+    output_parts.append(f"")
+    
+    if description:
+        output_parts.append(f"**Description:**")
+        output_parts.append(description)
+        output_parts.append(f"")
+    
+    if content:
+        # Limit content to prevent token explosion
+        MAX_CONTENT_LENGTH = 8000
+        if len(content) > MAX_CONTENT_LENGTH:
+            content = content[:MAX_CONTENT_LENGTH] + f"\n\n... [TRUNCATED - {len(content)} chars total]"
+        
+        output_parts.append(f"**Content:**")
+        output_parts.append("```")
+        output_parts.append(content)
+        output_parts.append("```")
+    
+    return [types.TextContent(type="text", text="\n".join(output_parts))]
 
 
 # --- SERVER ENTRYPOINT ---

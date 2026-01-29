@@ -769,6 +769,17 @@ async def list_tools() -> list[types.Tool]:
                 },
                 "required": ["uid"]
             }
+        ),
+        types.Tool(
+            name="illuminate_path",
+            description="🔦 ILLUMINATE THE PATH: Given a task/query, finds the relevant path through the graph (Idea→Spec→Req→Task) and returns FULL CONTENT of all nodes on that path. Use at START of any task to get complete context.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Task or question (e.g., 'добавить 2FA авторизацию', 'security requirements')"}
+                },
+                "required": ["query"]
+            }
         )
     ]
 
@@ -799,6 +810,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "format_cypher": return await tool_format_cypher(arguments)
     elif name == "register_task": return await tool_register_task(arguments)
     elif name == "read_node": return await tool_read_node(arguments)
+    elif name == "illuminate_path": return await tool_illuminate_path(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
 async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
@@ -1485,6 +1497,212 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
         output_parts.append("```")
         output_parts.append(content)
         output_parts.append("```")
+    
+    return [types.TextContent(type="text", text="\n".join(output_parts))]
+
+
+async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:
+    """
+    🔦 ILLUMINATE THE PATH
+    
+    Given a task/query, finds the relevant path through the graph and returns
+    FULL CONTENT of all nodes on that path.
+    
+    Algorithm:
+    1. Semantic search to find entry point (most relevant node)
+    2. Traverse UP to root (Idea)
+    3. Traverse DOWN to leaves (Tasks/Files)
+    4. Find lateral connections (DEPENDS_ON, CONFLICT)
+    5. Return content of all nodes on the path
+    """
+    query = arguments.get("query")
+    if not query:
+        return [types.TextContent(type="text", text="Error: query is required")]
+    
+    driver = get_driver()
+    output_parts = []
+    
+    output_parts.append("🔦 **PATH ILLUMINATION**")
+    output_parts.append(f"   Query: \"{query}\"")
+    output_parts.append("=" * 60)
+    output_parts.append("")
+    
+    # 1. SEMANTIC SEARCH - Find entry point
+    query_embedding = emb_manager.get_embedding(query)
+    
+    if not query_embedding:
+        return [types.TextContent(type="text", text="Error: Could not generate embedding for query")]
+    
+    # Find most relevant node as entry point
+    search_query = """
+    MATCH (n)
+    WHERE n.embedding IS NOT NULL 
+        AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+    WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $emb[i]) as score
+    WHERE score > 0.5
+    RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
+    ORDER BY score DESC
+    LIMIT 1
+    """
+    
+    entry_rec, _, _ = driver.execute_query(
+        search_query, 
+        {"emb": query_embedding}, 
+        database_="neo4j"
+    )
+    
+    if not entry_rec:
+        output_parts.append("❌ No relevant nodes found for this query.")
+        output_parts.append("   Try a different search term or check if graph has embeddings.")
+        return [types.TextContent(type="text", text="\n".join(output_parts))]
+    
+    entry_uid = entry_rec[0]['uid']
+    entry_title = entry_rec[0]['title']
+    entry_type = entry_rec[0]['type']
+    entry_score = entry_rec[0]['score']
+    
+    output_parts.append(f"📍 **ENTRY POINT** (similarity: {entry_score:.2f})")
+    output_parts.append(f"   {entry_uid} ({entry_type}): {entry_title}")
+    output_parts.append("")
+    
+    # 2. COLLECT PATH NODES
+    # Get all nodes on the vertical path (up and down) + lateral connections
+    path_query = """
+    // Find entry node
+    MATCH (entry {uid: $entry_uid})
+    
+    // Collect path UP (to ancestors)
+    OPTIONAL MATCH pathUp = (entry)<-[:DECOMPOSES*1..5]-(ancestor)
+    
+    // Collect path DOWN (to descendants)
+    OPTIONAL MATCH pathDown = (entry)-[:DECOMPOSES*1..5]->(descendant)
+    
+    // Collect lateral connections
+    OPTIONAL MATCH (entry)-[lateral:DEPENDS_ON|CONFLICT|IMPLEMENTS]-(related)
+    
+    // Return all unique nodes
+    WITH entry,
+         COLLECT(DISTINCT ancestor) as ancestors,
+         COLLECT(DISTINCT descendant) as descendants,
+         COLLECT(DISTINCT related) as laterals
+    
+    RETURN entry, ancestors, descendants, laterals
+    """
+    
+    path_rec, _, _ = driver.execute_query(
+        path_query,
+        {"entry_uid": entry_uid},
+        database_="neo4j"
+    )
+    
+    if not path_rec:
+        output_parts.append("❌ Could not trace path from entry point.")
+        return [types.TextContent(type="text", text="\n".join(output_parts))]
+    
+    record = path_rec[0]
+    entry_node = record['entry']
+    ancestors = record['ancestors'] or []
+    descendants = record['descendants'] or []
+    laterals = record['laterals'] or []
+    
+    # Collect all UIDs to fetch content
+    all_uids = set()
+    all_uids.add(entry_uid)
+    for node in ancestors:
+        if node and node.get('uid'):
+            all_uids.add(node['uid'])
+    for node in descendants:
+        if node and node.get('uid'):
+            all_uids.add(node['uid'])
+    
+    lateral_uids = set()
+    for node in laterals:
+        if node and node.get('uid'):
+            lateral_uids.add(node['uid'])
+    
+    output_parts.append(f"📊 **PATH STATISTICS**")
+    output_parts.append(f"   • Vertical path: {len(all_uids)} nodes")
+    output_parts.append(f"   • Lateral connections: {len(lateral_uids)} nodes")
+    output_parts.append("")
+    
+    # 3. FETCH CONTENT OF ALL PATH NODES
+    content_query = """
+    MATCH (n)
+    WHERE n.uid IN $uids
+    RETURN n.uid as uid, 
+           labels(n)[0] as type,
+           n.title as title,
+           SUBSTRING(COALESCE(n.description, ''), 0, 500) as description,
+           SUBSTRING(COALESCE(n.content, ''), 0, 500) as content
+    ORDER BY 
+        CASE labels(n)[0]
+            WHEN 'Idea' THEN 1
+            WHEN 'Spec' THEN 2
+            WHEN 'Domain' THEN 3
+            WHEN 'Requirement' THEN 4
+            WHEN 'Task' THEN 5
+            ELSE 6
+        END
+    """
+    
+    # Vertical path content
+    output_parts.append("🛤️ **VERTICAL PATH** (Idea → Spec → Req → Task)")
+    output_parts.append("-" * 50)
+    
+    content_rec, _, _ = driver.execute_query(
+        content_query,
+        {"uids": list(all_uids)},
+        database_="neo4j"
+    )
+    
+    for node in content_rec:
+        uid = node['uid']
+        ntype = node['type']
+        title = node['title'] or uid
+        desc = node['description'] or ""
+        content = node['content'] or ""
+        
+        # Marker for entry point
+        marker = " ← ENTRY" if uid == entry_uid else ""
+        
+        output_parts.append(f"\n**[{ntype}] {uid}**{marker}")
+        output_parts.append(f"Title: {title}")
+        
+        if desc:
+            output_parts.append(f"Description: {desc[:300]}...")
+        
+        if content:
+            output_parts.append(f"Content: {content[:300]}...")
+    
+    # 4. LATERAL CONNECTIONS
+    if lateral_uids:
+        output_parts.append("")
+        output_parts.append("↔️ **LATERAL CONNECTIONS** (DEPENDS_ON, CONFLICT, IMPLEMENTS)")
+        output_parts.append("-" * 50)
+        
+        lateral_rec, _, _ = driver.execute_query(
+            content_query,
+            {"uids": list(lateral_uids)},
+            database_="neo4j"
+        )
+        
+        for node in lateral_rec:
+            uid = node['uid']
+            ntype = node['type']
+            title = node['title'] or uid
+            desc = node['description'] or ""
+            
+            output_parts.append(f"\n**[{ntype}] {uid}**")
+            output_parts.append(f"Title: {title}")
+            if desc:
+                output_parts.append(f"Description: {desc[:200]}...")
+    
+    # 5. ACTIVE CONSTRAINTS reminder
+    output_parts.append("")
+    output_parts.append("⚠️ **REMEMBER CONSTRAINTS:**")
+    output_parts.append("   • Russian language required (min 25% Cyrillic)")
+    output_parts.append("   • No [[WikiLinks]] - use link_nodes tool")
+    output_parts.append("   • Check available actions with look_around")
     
     return [types.TextContent(type="text", text="\n".join(output_parts))]
 

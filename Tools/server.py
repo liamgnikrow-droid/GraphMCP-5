@@ -16,22 +16,25 @@ STATE_FILE = os.path.join(os.path.dirname(__file__), ".active_project_state")
 
 def load_project_state():
     """Loads active project state from file persistence."""
-    default_state = {"id": "graphmcp", "root": WORKSPACE_ROOT}
+    default_state = {"id": "graphmcp", "root": WORKSPACE_ROOT, "workflow": "Architect"}
     try:
         import json
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE, 'r') as f:
-                return json.load(f)
+                state = json.load(f)
+                # Ensure all keys exist (migration support)
+                if "workflow" not in state: state["workflow"] = "Architect"
+                return state
     except Exception as e:
         print(f"⚠️ Failed to load project state: {e}", file=sys.stderr)
     return default_state
 
-def save_project_state(project_id, project_root):
+def save_project_state(project_id, project_root, workflow):
     """Persists active project state."""
     try:
         import json
         with open(STATE_FILE, 'w') as f:
-            json.dump({"id": project_id, "root": project_root}, f)
+            json.dump({"id": project_id, "root": project_root, "workflow": workflow}, f)
     except Exception as e:
         print(f"⚠️ Failed to save project state: {e}", file=sys.stderr)
 
@@ -39,7 +42,8 @@ def save_project_state(project_id, project_root):
 _initial_state = load_project_state()
 ACTIVE_PROJECT_ID = _initial_state["id"]
 ACTIVE_PROJECT_ROOT = _initial_state["root"]
-print(f"🚀 ACTIVE PROJECT: {ACTIVE_PROJECT_ID} (Root: {ACTIVE_PROJECT_ROOT})", file=sys.stderr)
+ACTIVE_WORKFLOW = _initial_state["workflow"]
+print(f"🚀 ACTIVE PROJECT: {ACTIVE_PROJECT_ID} (Root: {ACTIVE_PROJECT_ROOT}) | Workflow: {ACTIVE_WORKFLOW}", file=sys.stderr)
 
 def get_current_project_id():
     return ACTIVE_PROJECT_ID
@@ -47,11 +51,26 @@ def get_current_project_id():
 def get_current_project_root():
     return ACTIVE_PROJECT_ROOT
 
+def get_current_workflow():
+    return ACTIVE_WORKFLOW
+
 def set_current_project(project_id: str, project_root: str):
-    global ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT
+    global ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT, ACTIVE_WORKFLOW
     ACTIVE_PROJECT_ID = project_id
     ACTIVE_PROJECT_ROOT = project_root
-    save_project_state(project_id, project_root)
+    # Preserve current workflow when switching project
+    save_project_state(project_id, project_root, ACTIVE_WORKFLOW)
+    
+    print(f"🔄 Switched to project: {ACTIVE_PROJECT_ID} at {ACTIVE_PROJECT_ROOT}", file=sys.stderr)
+
+def set_workflow_state(mode: str):
+    global ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT, ACTIVE_WORKFLOW
+    if mode not in ["Architect", "Builder", "Auditor"]:
+        raise ValueError(f"Invalid workflow mode: {mode}")
+    
+    ACTIVE_WORKFLOW = mode
+    save_project_state(ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT, mode)
+    print(f"🔄 Switched Workflow to: {ACTIVE_WORKFLOW}", file=sys.stderr)
     
     print(f"🔄 Switched to project: {ACTIVE_PROJECT_ID} at {ACTIVE_PROJECT_ROOT}", file=sys.stderr)
 
@@ -175,7 +194,23 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
          return [types.TextContent(type="text", text="Error: No Backend Connection")]
          
     loc_uid = get_agent_location()
+    loc_uid = get_agent_location()
     output_parts = []
+    
+    # === 0. SYSTEM STATE ===
+    active_project = get_current_project_id()
+    active_workflow = get_current_workflow()
+    
+    output_parts.append(f"🏴 **PROJECT:** `{active_project}` | **MODE:** `{active_workflow}`")
+    
+    if active_workflow == "Architect":
+        output_parts.append("   ⚠️ **RESTRICTION:** You are in DESIGN mode. DO NOT write code. Focus on Nodes.")
+    elif active_workflow == "Auditor":
+        output_parts.append("   ⛔ **READ ONLY:** You are in AUDIT mode. Graph mutations are BLOCKED.")
+    elif active_workflow == "Builder":
+         output_parts.append("   ✅ **BUILDER:** Code actions allowed.")
+         
+    output_parts.append("")
     
     # === 1. CURRENT LOCATION ===
     loc_query = """
@@ -822,6 +857,17 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="set_workflow",
+            description="Sets the agent's active workflow mode (Architect, Builder, Auditor). Controls available tools.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mode": {"type": "string", "enum": ["Architect", "Builder", "Auditor"], "description": "Workflow Mode"}
+                },
+                "required": ["mode"]
+            }
+        ),
+        types.Tool(
             name="read_node",
             description="Reads the FULL content of a node by UID. Returns title, description, and body text. Use to understand what a node contains before making decisions.",
             inputSchema={
@@ -857,6 +903,16 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
              type="text", 
              text=f"❌ PHYSICS ERROR: Tool '{name}' is FORBIDDEN when you are at a node of type '{current_node_type}'.\nLocation: {loc_uid}"
          )]
+         
+    # --- WORKFLOW CHECK ---
+    current_workflow = get_current_workflow()
+    MUTATION_TOOLS = ["create_concept", "link_nodes", "delete_node", "delete_link", "register_task", "sync_graph"]
+    
+    if current_workflow == "Auditor" and name in MUTATION_TOOLS:
+        return [types.TextContent(
+             type="text",
+             text=f"⛔ WORKFLOW RESTRICTION: Tool '{name}' is BLOCKED in 'Auditor' mode.\nTip: Use set_workflow('Builder') or set_workflow('Architect') to enable modifications."
+        )]
 
     # --- DISPATCH ---
     if name == "look_around": return await tool_look_around(arguments)
@@ -873,6 +929,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "register_task": return await tool_register_task(arguments)
     elif name == "read_node": return await tool_read_node(arguments)
     elif name == "switch_project": return await tool_switch_project(arguments)
+    elif name == "set_workflow": return await tool_set_workflow(arguments)
     elif name == "illuminate_path": return await tool_illuminate_path(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
@@ -1475,6 +1532,32 @@ async def tool_switch_project(arguments: dict) -> list[types.TextContent]:
     set_current_project(project_id, WORKSPACE_ROOT)
     
     return [types.TextContent(type="text", text=f"✅ **SWITCHED PROJECT**\n\nActive Project: `{project_id}`\nRoot: `{WORKSPACE_ROOT}`\n\nAll subsequent queries will be filtered by this project_id.")]
+
+
+async def tool_set_workflow(arguments: dict) -> list[types.TextContent]:
+    """
+    Sets the agent's active workflow mode.
+    Modes: Architect, Builder, Auditor.
+    """
+    mode = arguments.get("mode")
+    if not mode:
+        return [types.TextContent(type="text", text="Error: mode is required")]
+    
+    try:
+        set_workflow_state(mode)
+        
+        # Explain what changed
+        explanation = ""
+        if mode == "Architect":
+            explanation = "🏗️ **ARCHITECT MODE**: You can design graph (Idea/Spec/Req). Coding tools are LOCKED."
+        elif mode == "Builder":
+            explanation = "👷 **BUILDER MODE**: You can write code and create Tasks. Graph design tools are RESTRICTED."
+        elif mode == "Auditor":
+            explanation = "🕵️ **AUDITOR MODE**: Read-only access to Code and Graph. Modification tools are LOCKED."
+            
+        return [types.TextContent(type="text", text=f"✅ **WORKFLOW SET**\n\n{explanation}")]
+    except ValueError as e:
+        return [types.TextContent(type="text", text=f"Error: {e}")]
 
 
 async def tool_read_node(arguments: dict) -> list[types.TextContent]:

@@ -115,32 +115,143 @@ def get_agent_location():
 
 # --- TOOL IMPLEMENTATIONS ---
 async def tool_look_around(arguments: dict) -> list[types.TextContent]:
+    """
+    ENHANCED DASHBOARD: Returns comprehensive context for Agent decision-making.
+    
+    Shows:
+    1. Current location with description
+    2. Neighbors with relationship types and descriptions
+    3. Available actions from Meta-Graph
+    4. Active system constraints
+    5. Related Requirements within 2 hops
+    6. Graph statistics
+    """
     driver = get_driver()
     if not driver:
          return [types.TextContent(type="text", text="Error: No Backend Connection")]
          
     loc_uid = get_agent_location()
+    output_parts = []
     
-    query = """
+    # === 1. CURRENT LOCATION ===
+    loc_query = """
     MATCH (n {uid: $uid})
-    OPTIONAL MATCH (n)-[r]->(target)
-    RETURN n, collect({type: type(r), uid: target.uid, title: target.title}) as neighbors
+    RETURN labels(n)[0] as type, n.title as title, n.description as description
     """
-    records, _, _ = driver.execute_query(query, {"uid": loc_uid}, database_="neo4j")
+    records, _, _ = driver.execute_query(loc_query, {"uid": loc_uid}, database_="neo4j")
     
     if not records:
-         if loc_uid == "IDEA-Genesis":
-             driver.execute_query("MERGE (:Idea {uid: 'IDEA-Genesis', title: 'Genesis Point'})", database_="neo4j")
-             return [types.TextContent(type="text", text="Genesis Node Created. You are at (:Idea {uid: 'IDEA-Genesis'}). Neighbors: []")]
-         return [types.TextContent(type="text", text=f"Error: You are lost. Location {loc_uid} not found.")]
+        if loc_uid == "IDEA-Genesis":
+            driver.execute_query("MERGE (:Idea {uid: 'IDEA-Genesis', title: 'Genesis Point'})", database_="neo4j")
+            return [types.TextContent(type="text", text="Genesis Node Created. You are at (:Idea {uid: 'IDEA-Genesis'}). Use look_around again.")]
+        return [types.TextContent(type="text", text=f"Error: Location {loc_uid} not found.")]
     
-    node = records[0]['n']
-    neighbors = records[0]['neighbors']
+    loc_type = records[0]['type']
+    loc_title = records[0]['title'] or loc_uid
+    loc_desc = records[0]['description'] or "(no description)"
     
-    return [types.TextContent(
-        type="text",
-        text=f"You are at (:{list(node.labels)[0]} {{uid: '{node['uid']}', title: '{node.get('title')}'}})\nNeighbors: {neighbors}"
-    )]
+    # Truncate description
+    if len(loc_desc) > 150:
+        loc_desc = loc_desc[:150] + "..."
+    
+    output_parts.append("📍 **CURRENT LOCATION**")
+    output_parts.append(f"   **{loc_uid}** ({loc_type})")
+    output_parts.append(f"   {loc_desc}")
+    output_parts.append("")
+    
+    # === 2. NEIGHBORS WITH RELATIONSHIP TYPES ===
+    neighbors_query = """
+    MATCH (n {uid: $uid})-[r]-(other)
+    WHERE NOT other:Agent
+    RETURN 
+        CASE WHEN startNode(r) = n THEN '→' ELSE '←' END as direction,
+        type(r) as rel_type,
+        other.uid as uid,
+        labels(other)[0] as type,
+        other.title as title,
+        SUBSTRING(COALESCE(other.description, ''), 0, 80) as desc
+    ORDER BY direction, rel_type
+    """
+    neighbors_rec, _, _ = driver.execute_query(neighbors_query, {"uid": loc_uid}, database_="neo4j")
+    
+    output_parts.append(f"👥 **NEIGHBORS** ({len(neighbors_rec)})")
+    if neighbors_rec:
+        for n in neighbors_rec:
+            arrow = n['direction']
+            rel = n['rel_type']
+            uid = n['uid']
+            ntype = n['type']
+            title = n['title'] or uid
+            desc = n['desc']
+            
+            if desc:
+                output_parts.append(f"   {arrow} {rel} {arrow} **{uid}** ({ntype})")
+                output_parts.append(f"      \"{title}\": {desc}...")
+            else:
+                output_parts.append(f"   {arrow} {rel} {arrow} **{uid}** ({ntype}): {title}")
+    else:
+        output_parts.append("   (no neighbors)")
+    output_parts.append("")
+    
+    # === 3. AVAILABLE ACTIONS (from Meta-Graph) ===
+    actions_query = """
+    MATCH (nt:NodeType {name: $node_type})-[:CAN_PERFORM]->(a:Action {scope: 'contextual'})
+    RETURN a.tool_name as tool, a.target_type as target
+    """
+    actions_rec, _, _ = driver.execute_query(actions_query, {"node_type": loc_type}, database_="neo4j")
+    
+    output_parts.append("🔧 **AVAILABLE ACTIONS** (contextual)")
+    if actions_rec:
+        for a in actions_rec:
+            tool = a['tool']
+            target = a['target']
+            if target:
+                output_parts.append(f"   • {tool}(type='{target}')")
+            else:
+                output_parts.append(f"   • {tool}")
+    else:
+        output_parts.append("   (none specific to this node type)")
+    output_parts.append("   + Global: look_around, move_to, read_node, get_full_context, look_for_similar")
+    output_parts.append("")
+    
+    # === 4. ACTIVE SYSTEM CONSTRAINTS ===
+    constraints_query = """
+    MATCH (c:Constraint)
+    RETURN c.uid as uid, c.rule_name as name, c.error_message as msg
+    """
+    constraints_rec, _, _ = driver.execute_query(constraints_query, database_="neo4j")
+    
+    output_parts.append("⚠️ **SYSTEM CONSTRAINTS** (enforced automatically)")
+    for c in constraints_rec:
+        output_parts.append(f"   • {c['name']}: {c['msg'][:60]}...")
+    output_parts.append("")
+    
+    # === 5. RELATED REQUIREMENTS (2 hops) ===
+    req_query = """
+    MATCH (n {uid: $uid})-[*1..2]-(r:Requirement)
+    RETURN DISTINCT r.uid as uid, r.title as title
+    LIMIT 5
+    """
+    req_rec, _, _ = driver.execute_query(req_query, {"uid": loc_uid}, database_="neo4j")
+    
+    if req_rec:
+        output_parts.append("📋 **RELATED REQUIREMENTS** (within 2 hops)")
+        for r in req_rec:
+            output_parts.append(f"   • {r['uid']}: {r['title']}")
+        output_parts.append("")
+    
+    # === 6. GRAPH STATS ===
+    stats_query = """
+    MATCH (n)
+    WHERE n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain
+    RETURN labels(n)[0] as type, count(n) as count
+    """
+    stats_rec, _, _ = driver.execute_query(stats_query, database_="neo4j")
+    
+    stats_str = " • ".join([f"{s['type']}: {s['count']}" for s in stats_rec])
+    output_parts.append(f"📊 **GRAPH STATS:** {stats_str}")
+    
+    return [types.TextContent(type="text", text="\n".join(output_parts))]
 
 async def tool_move_to(arguments: dict) -> list[types.TextContent]:
     target_uid = arguments.get("target_uid")

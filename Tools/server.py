@@ -11,6 +11,28 @@ import sys
 mcp = Server("graph-native-core")
 sync_tool = GraphSync()
 
+# --- PHASE 8: MULTI-PROJECT STATE ---
+# By default, we start in 'graphmcp' project (the documentation itself)
+ACTIVE_PROJECT_ID = "graphmcp"
+ACTIVE_PROJECT_ROOT = WORKSPACE_ROOT
+
+def get_current_project_id():
+    return ACTIVE_PROJECT_ID
+
+def get_current_project_root():
+    return ACTIVE_PROJECT_ROOT
+
+def set_current_project(project_id: str, project_root: str):
+    global ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT
+    ACTIVE_PROJECT_ID = project_id
+    ACTIVE_PROJECT_ROOT = project_root
+    
+    # Update SyncTool paths
+    # Note: GraphSync needs to be updated to respect dynamic roots!
+    # For now we assume WORKSPACE_ROOT in db_config is global base, 
+    # but we will need to refactor GraphSync to accept root param.
+    print(f"🔄 Switched to project: {ACTIVE_PROJECT_ID} at {ACTIVE_PROJECT_ROOT}", file=sys.stderr)
+
 # --- EMBEDDING MANAGER (LIGHTWEIGHT) ---
 class EmbeddingManager:
     _instance = None
@@ -227,13 +249,16 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
     output_parts.append("")
     
     # === 5. RELATED REQUIREMENTS (2 hops) with description ===
+    current_project = get_current_project_id()
+    
     req_query = """
     MATCH (n {uid: $uid})-[*1..2]-(r:Requirement)
+    WHERE (r.project_id = $project_id OR r.project_id IS NULL)
     RETURN DISTINCT r.uid as uid, r.title as title, 
            SUBSTRING(COALESCE(r.description, ''), 0, 100) as desc
     LIMIT 5
     """
-    req_rec, _, _ = driver.execute_query(req_query, {"uid": loc_uid}, database_="neo4j")
+    req_rec, _, _ = driver.execute_query(req_query, {"uid": loc_uid, "project_id": current_project}, database_="neo4j")
     
     if req_rec:
         output_parts.append("📋 **RELATED REQUIREMENTS** (within 2 hops)")
@@ -247,16 +272,17 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
                 output_parts.append(f"   • **{r['uid']}**: {title}")
         output_parts.append("")
     
-    # === 6. GRAPH STATS ===
+    # === 6. GRAPH STATS (Filtered by Project) ===
     stats_query = """
     MATCH (n)
-    WHERE n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain
+    WHERE (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+      AND (n.project_id = $project_id OR n.project_id IS NULL)
     RETURN labels(n)[0] as type, count(n) as count
     """
-    stats_rec, _, _ = driver.execute_query(stats_query, database_="neo4j")
+    stats_rec, _, _ = driver.execute_query(stats_query, {"project_id": current_project}, database_="neo4j")
     
     stats_str = " • ".join([f"{s['type']}: {s['count']}" for s in stats_rec])
-    output_parts.append(f"📊 **GRAPH STATS:** {stats_str}")
+    output_parts.append(f"📊 **PROJECT STATS ({current_project}):** {stats_str}")
     
     return [types.TextContent(type="text", text="\n".join(output_parts))]
 
@@ -500,6 +526,7 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
 
     driver = get_driver()
     parent_uid = get_agent_location() # "IDEA-Genesis"
+    current_project = get_current_project_id()
     
     query_create = f"""
     MATCH (parent {{uid: $parent_uid}})
@@ -507,7 +534,8 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
     SET n.title = $title,
         n.description = $desc,
         n.status = 'Draft',
-        n.created_at = datetime()
+        n.created_at = datetime(),
+        n.project_id = $project_id
     MERGE (parent)-[:DECOMPOSES]->(n)
     RETURN n.uid as uid
     """
@@ -516,12 +544,11 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
         semantic_text = f"{title} {desc}"
         embedding = emb_manager.get_embedding(semantic_text)
 
-        driver.execute_query(query_create, {
-            "parent_uid": parent_uid,
-            "uid": uid,
-            "title": title,
-            "desc": desc
-        }, database_="neo4j")
+        _, _, _ = driver.execute_query(
+            query_create, 
+            {"parent_uid": parent_uid, "uid": uid, "title": title, "desc": desc, "project_id": current_project}, 
+            database_="neo4j"
+        )
         
         # Save Embedding if successful
         if embedding:
@@ -537,6 +564,7 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
         # === IMPACT ANALYSIS ===
         impact_report = []
         impact_report.append(f"✅ **СОЗДАНО:** (:{c_type} {{uid: '{uid}'}})")
+        impact_report.append(f"   Project: {current_project}")
         impact_report.append(f"   Title: {title}")
         impact_report.append(f"   Synced to: {file_path}\n")
         
@@ -548,6 +576,7 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
             MATCH (n)
             WHERE n.embedding IS NOT NULL AND n.uid <> $new_uid
                 AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+                AND (n.project_id = $project_id OR n.project_id IS NULL)
             WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $emb[i]) as score
             WHERE score > 0.6
             RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
@@ -556,7 +585,7 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
             
             similar_rec, _, _ = driver.execute_query(
                 similar_query, 
-                {"new_uid": uid, "emb": embedding}, 
+                {"new_uid": uid, "emb": embedding, "project_id": current_project}, 
                 database_="neo4j"
             )
             
@@ -760,6 +789,17 @@ async def list_tools() -> list[types.Tool]:
             }
         ),
         types.Tool(
+            name="switch_project",
+            description="Switches the active project context (Multi-Project Architecture). Filters all subsequent queries by this project_id.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID (e.g., 'tgappparking')"}
+                },
+                "required": ["project_id"]
+            }
+        ),
+        types.Tool(
             name="read_node",
             description="Reads the FULL content of a node by UID. Returns title, description, and body text. Use to understand what a node contains before making decisions.",
             inputSchema={
@@ -810,6 +850,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "format_cypher": return await tool_format_cypher(arguments)
     elif name == "register_task": return await tool_register_task(arguments)
     elif name == "read_node": return await tool_read_node(arguments)
+    elif name == "switch_project": return await tool_switch_project(arguments)
     elif name == "illuminate_path": return await tool_illuminate_path(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
@@ -1097,26 +1138,15 @@ async def tool_look_for_similar(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text="Error: Semantic search is not available (model failed to load).")]
 
     driver = get_driver()
-    # Simple cosine similarity via Cypher (Vector index would be faster, but this works for lightweight)
-    # n.embedding is a list of floats
-    cypher = """
-    MATCH (n)
-    WHERE n.embedding IS NOT NULL
-    WITH n, gds.similarity.cosine(n.embedding, $query_emb) as score
-    WHERE score > 0.7
-    RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
-    ORDER BY score DESC LIMIT 5
-    """
-    
-    # Wait, GDS similarity might not be there. Let's use internal vector index if possible or manual calculation.
-    # Since we don't have GDS, we use dot product as approximation or a manual formula.
-    # Actually, Neo4j 5.15 has built-in vector functions in Cypher even without GDS.
+    current_project = get_current_project_id()
     
     # Manual Dot Product calculation in Cypher (since we lack vector functions/GDS)
     # Sentence-transformers usually return normalized vectors, so dot product = cosine similarity.
     vector_search_cypher = """
     MATCH (n)
-    WHERE n.embedding IS NOT NULL AND (n:Idea OR n:Spec OR n:Requirement OR n:Task)
+    WHERE n.embedding IS NOT NULL 
+        AND (n:Idea OR n:Spec OR n:Requirement OR n:Task)
+        AND (n.project_id = $project_id OR n.project_id IS NULL)
     WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $query_emb[i]) as score
     WHERE score > 0.3
     RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
@@ -1125,7 +1155,11 @@ async def tool_look_for_similar(arguments: dict) -> list[types.TextContent]:
     
     try:
         driver = get_driver()
-        records, _, _ = driver.execute_query(vector_search_cypher, {"query_emb": embedding}, database_="neo4j")
+        records, _, _ = driver.execute_query(
+            vector_search_cypher, 
+            {"query_emb": embedding, "project_id": current_project}, 
+            database_="neo4j"
+        )
         
         if not records:
              return [types.TextContent(type="text", text="No similar nodes found (threshold > 0.3).")]
@@ -1300,7 +1334,8 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
         context_parts.append("")
     
     # === 3. SEMANTICALLY SIMILAR NODES ===
-    embedding = emb_manager.get_embedding(query)
+    embedding = emb_manager.get_embedding(f"{loc_type} {loc_title}") # Changed to use loc_type and loc_title
+    current_project = get_current_project_id() # Added
     
     if embedding:
         context_parts.append("🧠 **СЕМАНТИЧЕСКИ БЛИЗКИЕ НОДЫ** (top-5)")
@@ -1308,13 +1343,14 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
         vector_search_cypher = """
         MATCH (n)
         WHERE n.embedding IS NOT NULL AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+            AND (n.project_id = $project_id OR n.project_id IS NULL)
         WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $query_emb[i]) as score
         WHERE score > 0.4
         RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
         ORDER BY score DESC LIMIT 5
         """
         
-        sim_rec, _, _ = driver.execute_query(vector_search_cypher, {"query_emb": embedding}, database_="neo4j")
+        sim_rec, _, _ = driver.execute_query(vector_search_cypher, {"query_emb": embedding, "project_id": current_project}, database_="neo4j")
         
         if sim_rec:
             for s in sim_rec:
@@ -1332,11 +1368,12 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     
     related_query = """
     MATCH path = (current {uid: $uid})-[:DECOMPOSES*1..2]-(related)
-    WHERE related:Spec OR related:Requirement
+    WHERE (related:Spec OR related:Requirement)
+      AND (related.project_id = $project_id OR related.project_id IS NULL)
     RETURN DISTINCT related.uid as uid, related.title as title, labels(related)[0] as type
     LIMIT 10
     """
-    related_rec, _, _ = driver.execute_query(related_query, {"uid": loc_uid}, database_="neo4j")
+    related_rec, _, _ = driver.execute_query(related_query, {"uid": loc_uid, "project_id": current_project}, database_="neo4j")
     
     if related_rec:
         for r in related_rec:
@@ -1374,7 +1411,8 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     
     stats_query = """
     MATCH (n)
-    WHERE n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain
+    WHERE (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+      AND (n.project_id = $project_id OR n.project_id IS NULL)
     RETURN labels(n)[0] as type, count(n) as count
     ORDER BY count DESC
     """
@@ -1398,6 +1436,25 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     return [types.TextContent(type="text", text=full_text)]
 
 
+async def tool_switch_project(arguments: dict) -> list[types.TextContent]:
+    """
+    Switches the active project context.
+    Updates global state (ACTIVE_PROJECT_ID, ACTIVE_PROJECT_ROOT).
+    """
+    project_id = arguments.get("project_id")
+    # For now, we assume root is managed externally or stays same for simple test
+    # In full version, this would check if project exists in DB.
+    
+    if not project_id:
+        return [types.TextContent(type="text", text="Error: project_id is required")]
+        
+    # Switch Global State
+    # Note: project_root argument can be added later
+    set_current_project(project_id, WORKSPACE_ROOT)
+    
+    return [types.TextContent(type="text", text=f"✅ **SWITCHED PROJECT**\n\nActive Project: `{project_id}`\nRoot: `{WORKSPACE_ROOT}`\n\nAll subsequent queries will be filtered by this project_id.")]
+
+
 async def tool_read_node(arguments: dict) -> list[types.TextContent]:
     """
     Reads the FULL content of a node by UID.
@@ -1410,8 +1467,9 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text="Error: uid is required")]
     
     driver = get_driver()
+    current_project = get_current_project_id()
     
-    # 1. Fetch node properties from Neo4j
+    # 1. Fetch node properties from Neo4j (Filtered by Project)
     query = """
     MATCH (n {uid: $uid})
     RETURN labels(n)[0] as type,
@@ -1419,7 +1477,7 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
            n.description as description,
            n.content as content,
            n.status as status,
-           n.created_at as created_at
+           n.project_id as project_id
     """
     
     try:
@@ -1431,6 +1489,11 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text=f"❌ Node '{uid}' not found in graph")]
     
     record = records[0]
+    # CHECK ACCESS
+    node_project = record.get("project_id")
+    if node_project and node_project != current_project:
+        return [types.TextContent(type="text", text=f"⛔ ACCESS DENIED: Node '{uid}' belongs to project '{node_project}', but you are in '{current_project}'.")]
+
     node_type = record.get("type", "Unknown")
     title = record.get("title", "N/A")
     description = record.get("description", "")
@@ -1529,15 +1592,17 @@ async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:
     
     # 1. SEMANTIC SEARCH - Find entry point
     query_embedding = emb_manager.get_embedding(query)
+    current_project = get_current_project_id()
     
     if not query_embedding:
         return [types.TextContent(type="text", text="Error: Could not generate embedding for query")]
     
-    # Find most relevant node as entry point
+    # Find most relevant node as entry point (Filtered by Project)
     search_query = """
     MATCH (n)
     WHERE n.embedding IS NOT NULL 
         AND (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+        AND (n.project_id = $project_id OR n.project_id IS NULL)
     WITH n, REDUCE(s = 0.0, i IN RANGE(0, size(n.embedding)-1) | s + n.embedding[i] * $emb[i]) as score
     WHERE score > 0.5
     RETURN n.uid as uid, n.title as title, labels(n)[0] as type, score
@@ -1547,7 +1612,7 @@ async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:
     
     entry_rec, _, _ = driver.execute_query(
         search_query, 
-        {"emb": query_embedding}, 
+        {"emb": query_embedding, "project_id": current_project}, 
         database_="neo4j"
     )
     

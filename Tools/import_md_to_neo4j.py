@@ -123,16 +123,6 @@ def import_md_files():
                     if sline == "## Description" or sline == "## Content":
                         continue
                         
-                    # DEDUPLICATION:
-                    # If line is identical to the last added line, skip it.
-                    # Exception: allow single empty lines, but collapse multiple.
-                    if clean_lines:
-                         last_added = clean_lines[-1].strip()
-                         if sline and sline == last_added:
-                             continue # Skip duplicate content line
-                         if not sline and not last_added:
-                             continue # Skip multiple empty lines
-
                     clean_lines.append(line)
             
             body = "\n".join(clean_lines).strip()

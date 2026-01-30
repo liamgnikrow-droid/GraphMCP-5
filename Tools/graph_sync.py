@@ -282,7 +282,10 @@ class GraphSync:
                     skipping_metadata = False
                     clean_lines.append(line)
                 else:
-                    # We are in the body - keep everything
+                    # BODY CLEANUP: If we see ANOTHER "## Description", it's a duplication bug. Skip it.
+                    if sline == "## Description" or sline == "## Content":
+                        continue
+
                     clean_lines.append(line)
             
             return "\n".join(clean_lines).strip()

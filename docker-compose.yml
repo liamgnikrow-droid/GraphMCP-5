@@ -46,6 +46,8 @@ services:
       - NEO4J_PASSWORD=password
       - WORKSPACE_ROOT=/workspace
       - PYTHONPATH=/opt/tools
+      # IRON DOME: Authentication token for MCP access
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-b7d1aa6b7ee609152a8bbe94813beab1446028e759c4dcdae3b16f6360e231eb}
     command: [ "python", "/opt/tools/server.py" ]
     ports:
       - "8000:8000"

@@ -85,6 +85,58 @@ def import_md_files():
             if fm_end_match:
                 body = content[fm_end_match.end():].strip()
             
+            # DUPLICATION FIX: Strip conflict markers
+            conflict_marker = "## 🔄 SYNC CONFLICT: Database Version"
+            if conflict_marker in body:
+                body = body.split(conflict_marker)[0].strip()
+            
+            if conflict_marker in body:
+                body = body.split(conflict_marker)[0].strip()
+
+            # AGGRESSIVE CLEANUP: Remove "Context", duplicated "Description" headers, and redundant body
+            lines = body.split('\n')
+            clean_lines = []
+            skipping_metadata = True
+            
+            seen_description = False
+            
+            for line in lines:
+                sline = line.strip()
+                
+                # Metadata / Header Cleanup Phase
+                if skipping_metadata:
+                    if not sline: continue
+                    if sline.startswith("# "): continue
+                    if sline.startswith("> "): continue
+                    if sline.startswith("**ID:**") or sline.startswith("**Status:**"): continue
+                    
+                    if sline == "## Description" or sline == "## Content": 
+                        if not seen_description:
+                             seen_description = True # Found our start point
+                        continue 
+                        
+                    # If we hit real content, stop skipping
+                    skipping_metadata = False
+                    clean_lines.append(line)
+                else:
+                    # BODY CLEANUP: If we see ANOTHER "## Description", it's a duplication bug. Skip it.
+                    if sline == "## Description" or sline == "## Content":
+                        continue
+                        
+                    # DEDUPLICATION:
+                    # If line is identical to the last added line, skip it.
+                    # Exception: allow single empty lines, but collapse multiple.
+                    if clean_lines:
+                         last_added = clean_lines[-1].strip()
+                         if sline and sline == last_added:
+                             continue # Skip duplicate content line
+                         if not sline and not last_added:
+                             continue # Skip multiple empty lines
+
+                    clean_lines.append(line)
+            
+            body = "\n".join(clean_lines).strip()
+            
             # Simple description extraction
             description = frontmatter.get('description', '')
             if not description and body:
@@ -95,16 +147,33 @@ def import_md_files():
                         description = line.strip()[:200]
                         break
             
-            nodes.append({
+            # Prepare properties dictionary
+            node_props = {
                 'uid': uid,
-                'type': node_type,
                 'title': title,
                 'status': status,
                 'description': description,
                 'content': body
+            }
+            
+            # Metadata fields and relationships to skip in 'props' map
+            skip_fields = [
+                'uid', 'type', 'title', 'status', 'description', 'content', 'name',
+                'decomposes', 'implements', 'depends_on', 'relates_to', 'restricts', 'can_perform',
+                'tags', 'cssclasses'
+            ]
+            
+            for k, v in frontmatter.items():
+                if k not in skip_fields:
+                    node_props[k] = v
+            
+            nodes.append({
+                'uid': uid,
+                'type': node_type,
+                'props': node_props
             })
             
-            # Extract relationships
+            # Extract relationships (same logic as before)
             for rel_type in ['decomposes', 'implements', 'depends_on', 'relates_to', 'restricts', 'can_perform']:
                 if rel_type in frontmatter:
                     targets = frontmatter[rel_type]
@@ -125,7 +194,7 @@ def import_md_files():
     
     print(f"✅ Parsed {len(nodes)} nodes, {len(relationships)} relationships")
     
-    # 3. Create nodes in Neo4j
+    # 4. Create nodes in Neo4j
     with driver.session(database="neo4j") as session:
         created = 0
         batch_size = 100
@@ -146,15 +215,55 @@ def import_md_files():
                 session.run(f"""
                     UNWIND $batch AS node
                     MERGE (n:{safe_label} {{uid: node.uid}})
-                    SET n.title = node.title,
-                        n.status = node.status,
-                        n.description = node.description,
-                        n.content = node.content
+                    SET n += node.props
                 """, batch=batch)
                 created += len(batch)
         print(f"✅ Created {created} nodes")
 
-        # 4. Create relationships
+        # 5. Spec Atomizer (Parsing SPEC-Graph_Physics.md)
+        atomized_count = 0
+        spec_physics_file = GRAPH_EXPORT / "2_Specs" / "SPEC-Graph_Physics.md"
+        if spec_physics_file.exists():
+            print(f"🔬 Atomizing {spec_physics_file.name}...")
+            spec_content = spec_physics_file.read_text(encoding='utf-8')
+            
+            # Regex to find table rows with IDs (e.g., | 1.4.1 | ... |)
+            pattern = r"\|\s*([0-9.]+)\s*\|\s*([^|]+)\s*\|\s*([^|]*)\s*\|"
+            
+            for match in re.finditer(pattern, spec_content):
+                item_id = match.group(1).strip()
+                item_title = match.group(2).strip()
+                item_desc = match.group(3).strip()
+                
+                if item_id.lower() == 'id': continue # Skip header
+                
+                uid = f"SPEC-ITEM-{item_id}"
+                
+                # Check for changes and mark for review if needed
+                session.run("""
+                    MATCH (parent {uid: 'SPEC-Graph_Physics'})
+                    MERGE (si:SpecItem {uid: $uid})
+                    SET si.spec_id = $item_id,
+                        si.title = $title,
+                        si.parent_spec = 'SPEC-Graph_Physics'
+                    
+                    WITH si, si.description as old_desc, parent
+                    SET si.description = $desc
+                    
+                    // IF content changed, mark for review
+                    FOREACH (ignoreMe IN CASE WHEN old_desc IS NOT NULL AND old_desc <> $desc THEN [1] ELSE [] END |
+                        SET si.status = 'Requires Semantic Review',
+                            si.updated_at = datetime()
+                    )
+                    
+                    // Link: Spec -> DECOMPOSES -> SpecItem
+                    MERGE (parent)-[:DECOMPOSES]->(si)
+                """, uid=uid, item_id=item_id, title=item_title, desc=item_desc)
+                atomized_count += 1
+        
+        print(f"✅ Atomized {atomized_count} spec items")
+
+        # 6. Create relationships
         linked = 0
         rels_by_type = {}
         for r in relationships:

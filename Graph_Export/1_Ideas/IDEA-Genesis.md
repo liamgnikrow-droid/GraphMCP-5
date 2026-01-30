@@ -1,69 +1,20 @@
 ---
 uid: "IDEA-Genesis"
-title: "Genesis Point"
+title: "Genesis"
 type: "Idea"
 project_id: "graphmcp"
-status: "unknown"
-tags: [graph/idea, state/unknown]
+status: "Canonical"
+tags: [graph/idea, state/canonical]
 cssclasses: [juggl-node, type-idea, premium-card]
 decomposes:
-  - "[[IDEA-OLD_WORLD_LEGACY]]"
-  - "[[IDEA-TG_APP_PARKING__OSNOVANIE__FOUNDATION]]"
-  - "[[IDEA-TG_APP_PARKING__OSNOVANIE__FOUNDATION]]"
-  - "[[SPEC-Bootstrap]]"
-  - "[[SPEC-GRAPH_NATIVE_CONSTRAINTS]]"
-  - "[[TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU]]"
-  - "[[TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU]]"
-  - "[[TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU]]"
-  - "[[TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU]]"
-  - "[[TASK-TASK_FROM_IDEA]]"
-  - "[[TASK-TASK_FROM_IDEA]]"
+  - "[[SPEC-Graph_Physics]]"
 ---
-# Genesis Point
+# Genesis
 
 > [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `unknown`
+> **ID:** `IDEA-Genesis` | **Status:** `Canonical`
 
 ## Description
-> [!abstract] Idea Context
+**Главная идея GraphMCP-5** — обеспечить **надежную разработку и развитие сложных IT-проектов** силами AI, устранив критические для LLM проблемы потери фокуса и размывания контекста.
 
-# Genesis Point
-
-> [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `unknown`
-
-## Description
-> [!abstract] Idea Context
-
-# Genesis Point
-
-> [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `unknown`
-
-## Description
-> [!abstract] Idea Context
-
-## Content
-# Genesis Point
-
-> [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `Draft`
-
-
-## 🔄 SYNC CONFLICT: Database Version
-> [!warning] Database content differs from local file.
-> Below is the version from Neo4j Graph:
-
-# Genesis Point
-
-> [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `unknown`
-
-## Description
-> [!abstract] Idea Context
-
-## Content
-# Genesis Point
-
-> [!abstract] Idea Context
-> **ID:** `IDEA-Genesis` | **Status:** `Draft`
+Проект помещает агента в **Graph-Native среду**, где Граф выступает не просто памятью, а **физической реальностью**, управляющей **вниманием** модели. Через механизм «Законов Физики» (локальность доступа и зависимость инструментов от состояния) система гарантирует, что агент не может «срезать углы» или «забыть» архитектуру. Это превращает хаотичную генерацию кода в **управляемый эволюционный процесс**, позволяя агенту успешно вести проекты от идеи до реализации и безопасно развивать уже существующие системы.

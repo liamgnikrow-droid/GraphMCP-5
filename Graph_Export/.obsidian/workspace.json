@@ -4,21 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "1f4fb71d44579a33",
+        "id": "aff958e83401c892",
         "type": "tabs",
         "children": [
           {
-            "id": "e9e6d7774b46b774",
+            "id": "5470f69a54a00e0e",
             "type": "leaf",
+            "pinned": true,
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "juggl_view",
+              "state": {},
+              "pinned": true,
               "icon": "lucide-file",
-              "title": "SPEC-Graph_Physics"
+              "title": "Juggl"
             }
           }
         ]
@@ -78,7 +76,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -94,7 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
+                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for SPEC-Graph_Physics"
+              "title": "Backlinks for SPEC-ITEM-1.3.1"
             }
           },
           {
@@ -113,12 +112,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
+                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from SPEC-Graph_Physics"
+              "title": "Outgoing links from SPEC-ITEM-1.3.1"
             }
           },
           {
@@ -156,13 +155,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
+                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of SPEC-Graph_Physics"
+              "title": "Outline of SPEC-ITEM-1.3.1"
             }
           },
           {
@@ -190,7 +189,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -204,27 +204,40 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "e9e6d7774b46b774",
+  "active": "5470f69a54a00e0e",
   "lastOpenFiles": [
-    "1_Ideas/IDEA-TG_APP_PARKING__OSNOVANIE__FOUNDATION.md",
-    "4_Requirements/REQUIREMENT-TRE_OVANIE_AVTORIZATSII_POLZOVATELEY.md",
-    "2_Specs/SPEC-GRAPH_NATIVE_CONSTRAINTS.md",
     "2_Specs/SPEC-Graph_Physics.md",
-    "2_Specs/SPEC-Test.md",
-    "2_Specs/SPEC-Bootstrap.md",
-    "4_Requirements/REQUIREMENT-TRE_OVANIE__EZOPASNOSTI_API.md",
-    "3_Tasks/TASK-REALIZOVAT_DVUHFAKTORNUYU_AVTORIZATSIYU.md",
-    "3_Tasks/TASK-DO_AVIT_DVUHFAKTORNUYU_AUTENTIFIKATSIYU.md",
-    "9_Unclassified/PROPOSAL-ADD_CONSTRAINT-20260128_202820.md",
-    "9_Unclassified/PROPOSAL-ADD_ACTION-20260128_202820.md",
-    "9_Unclassified/PROPOSAL-ADD_NODE_TYPE-20260128_202819.md",
-    "9_Unclassified",
-    "3_Tasks/TASK-OPTIMIZIROVAT_ZAPROSY_K_BAZE_DANNYH.md",
-    "3_Tasks/TASK-REALIZOVAT_AVTORIZATSIYU_POLZOVATELYA.md",
     "1_Ideas/IDEA-Genesis.md",
-    "1_Ideas/IDEA-RussianTest.md",
-    "1_Ideas/IDEA-OLD_WORLD_LEGACY.md",
-    "1_Ideas/IDEA-TEST_NARUSHENIYA.md",
-    "4_Requirements/REQ-YAML_LINKS_ONLY.md"
+    "2_Specs/Items/SPEC-ITEM-7.5.1.md",
+    "2_Specs/Items/SPEC-ITEM-1.3.1.md",
+    "2_Specs/Items/SPEC-ITEM-3.4.8.md",
+    "2_Specs/Items/SPEC-ITEM-3.4.7.md",
+    "2_Specs/Items/SPEC-ITEM-3.4.6.md",
+    "2_Specs/Items/SPEC-ITEM-3.4.5.md",
+    "2_Specs/Items/SPEC-ITEM-3.1.10.md",
+    "2_Specs/Items/SPEC-ITEM-3.1.9.md",
+    "2_Specs/Items/SPEC-ITEM-1.5.3.md",
+    "2_Specs/Items/SPEC-ITEM-1.5.2.md",
+    "2_Specs/Items/SPEC-ITEM-1.5.1.md",
+    "3_Tasks/BUG-Conflict-SPEC-Graph_Physics.md",
+    "4_Requirements/REQ-Tool_Move_To.md",
+    "3_Tasks/BUG-Conflict-SPEC-ITEM-3.2.5.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_MAP_CODEBASE__INTEGRATSIYA_KODA.md",
+    "3_Tasks/BUG-Conflict-REQ-Tool_Register_Task.md",
+    "3_Tasks/BUG-Conflict-REQ-Tool_Explain_Physics.md",
+    "3_Tasks/BUG-Conflict-SPEC-ITEM-7.5.3.md",
+    "3_Tasks/BUG-Conflict-SPEC-ITEM-7.5.4.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_SET_WORKFLOW__REZHIMY_RA_OTY.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_SWITCH_PROJECT__UPRAVLENIE_PROE.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_MOVE_TO__NAVIGATSIYA.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_LOOK_AROUND__KONTEKSTNYY_DASH_O.md",
+    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_PRINCIPLE_METAGRAPH_LAW__META_GRAF__.md",
+    "2_Specs/Items",
+    "9_Unclassified",
+    "6_Code/Classes",
+    "6_Code/Functions",
+    "6_Code/Files",
+    "6_Code",
+    "Graph_Physics"
   ]
 }

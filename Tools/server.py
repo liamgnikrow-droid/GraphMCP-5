@@ -8,11 +8,11 @@ import re
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
-    from code_mapper import CodeMapper
+    from codebase_mapper import CodebaseMapper
 except ImportError:
     # Fallback to prevent crash if file not found immediately
-    CodeMapper = None
-    print("⚠️ Warning: CodeMapper module not found.", file=sys.stderr)
+    CodebaseMapper = None
+    print("⚠️ Warning: CodebaseMapper module not found (codebase_mapper.py).", file=sys.stderr)
 
 # Initialize MCP Server
 mcp = Server("graph-native-core")
@@ -589,8 +589,18 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
          return [types.TextContent(type="text", text=f"Error: Invalid concept type '{c_type}'. Epic is DEAD.")]
 
     driver = get_driver()
-    parent_uid = get_agent_location() # "IDEA-Genesis"
     current_project = get_current_project_id()
+    
+    # --- STRICT UNIQUENESS CHECK (Iron Dome) ---
+    if c_type == "Idea":
+        check_query = "MATCH (n:Idea {project_id: $pid}) RETURN count(n) as count"
+        check_recs, _, _ = driver.execute_query(check_query, {"pid": current_project}, database_="neo4j")
+        if check_recs and check_recs[0]["count"] >= 1:
+             return [types.TextContent(
+                 type="text",
+                 text=f"❌ **CREATION REJECTED**\n\nA Project can have only ONE Root Idea (One Truth Policy).\nExisting Idea count: {check_recs[0]['count']}.\n\n💡 Use `read_graph` or `look_around` to find the existing root."
+             )]
+    parent_uid = get_agent_location() # "IDEA-Genesis"
     
     query_create = f"""
     MATCH (parent {{uid: $parent_uid}})
@@ -792,7 +802,7 @@ async def list_tools() -> list[types.Tool]:
                 "properties": {
                     "source_uid": {"type": "string"},
                     "target_uid": {"type": "string"},
-                    "rel_type": {"type": "string", "enum": ["IMPLEMENTS", "DECOMPOSES", "DEPENDS_ON", "CONFLICT", "IMPORTS"]}
+                    "rel_type": {"type": "string", "enum": ["IMPLEMENTS", "DECOMPOSES", "DEPENDS_ON", "CONFLICT", "IMPORTS", "SATISFIES", "PART_OF"]}
                 },
                 "required": ["source_uid", "target_uid", "rel_type"]
             }
@@ -1577,6 +1587,21 @@ async def tool_set_workflow(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text=f"Error: {e}")]
 
 
+async def tool_map_codebase(arguments: dict) -> list[types.TextContent]:
+    """
+    Scans codebase and maps it to Neo4j.
+    """
+    if not CodebaseMapper:
+         return [types.TextContent(type="text", text="Error: CodebaseMapper not loaded. Please ensure Tools/codebase_mapper.py exists.")]
+         
+    mapper = CodebaseMapper()
+    try:
+        count = mapper.scan_and_map()
+        return [types.TextContent(type="text", text=f"✅ Data Mapped Successfully.\nProcessed {count} nodes (Files, Classes, Functions).\nGraph is now aware of the codebase structure.")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error mapping codebase: {e}")]
+
+
 async def tool_read_node(arguments: dict) -> list[types.TextContent]:
     """
     Reads the FULL content of a node by UID.
@@ -1894,69 +1919,6 @@ async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:
     return [types.TextContent(type="text", text="\n".join(output_parts))]
 
 
-async def tool_map_codebase(arguments: dict) -> list[types.TextContent]:
-    """
-    Scans the codebase of the ACTIVE project and creates File/Class/Function nodes.
-    """
-    if not CodeMapper:
-        return [types.TextContent(type="text", text="Error: CodeMapper module not loaded.")]
-        
-    project_id = get_current_project_id()
-    project_root = get_current_project_root()
-    
-    # Workflow Check (handled by middleware, but check here too)
-    
-    # Basic check
-    if not os.path.exists(project_root):
-        return [types.TextContent(type="text", text=f"Error: Project root '{project_root}' does not exist on disk.")]
-
-    try:
-        mapper = CodeMapper(project_root, project_id)
-        nodes, rels = mapper.scan()
-        
-        if not nodes:
-             return [types.TextContent(type="text", text=f"⚠️ No code found in '{project_root}'. Is the path correct?")]
-
-        # Batch Insert into Neo4j
-        driver = get_driver()
-        count_nodes = 0
-        count_rels = 0
-        
-        with driver.session(database="neo4j") as session:
-            # 1. Insert Nodes
-            for n in nodes:
-                 node_type = n["type"] # File, Class, Function (safe from internal mapper)
-                 # Dynamic Label Injection (Safe as type is controlled)
-                 query = f"""
-                 MERGE (n:{node_type} {{uid: $uid}})
-                 SET n.title = $title,
-                     n.project_id = $pid,
-                     n.path = $path,
-                     n.last_mapped = datetime()
-                 """
-                 session.run(query, {
-                     "uid": n["uid"], 
-                     "title": n["title"], 
-                     "pid": n["project_id"],
-                     "path": n.get("path", "")
-                 })
-                 count_nodes += 1
-                 
-            # 2. Insert Relationships
-            for source, rel, target in rels:
-                # Assuming simple rels mostly CONTAINS
-                query = f"""
-                MATCH (s {{uid: $s_uid}}), (t {{uid: $t_uid}})
-                MERGE (s)-[:{rel}]->(t)
-                """
-                session.run(query, {"s_uid": source, "t_uid": target})
-                count_rels += 1
-                
-        return [types.TextContent(type="text", text=f"✅ **CODEBASE MAPPED**\n\nProject: `{project_id}`\nNodes Created/Updated: {count_nodes}\nRelationships: {count_rels}")]
-    except Exception as e:
-         return [types.TextContent(type="text", text=f"❌ Error Mapping Codebase: {e}")]
-
-
 # --- SERVER ENTRYPOINT ---
 if __name__ == "__main__":
     import sys
@@ -1981,11 +1943,31 @@ if __name__ == "__main__":
         from mcp.server.sse import SseServerTransport
         from starlette.responses import Response
         import uvicorn
+        import secrets
+
+        # --- IRON DOME: TOKEN AUTHENTICATION ---
+        # Generate or load auth token
+        MCP_AUTH_TOKEN = os.environ.get("MCP_AUTH_TOKEN")
+        if not MCP_AUTH_TOKEN:
+            # Generate a new token if not provided
+            MCP_AUTH_TOKEN = secrets.token_hex(32)
+            print(f"⚠️  WARNING: MCP_AUTH_TOKEN not set. Generated temporary token.", file=sys.stderr)
+            print(f"🔑 Token (share with mcp_client_adapter): {MCP_AUTH_TOKEN}", file=sys.stderr)
+        else:
+            print(f"🔒 Iron Dome: Token authentication ENABLED", file=sys.stderr)
+
+        def get_header(scope, name):
+            """Extract header value from ASGI scope."""
+            name_lower = name.lower().encode()
+            for header_name, header_value in scope.get("headers", []):
+                if header_name == name_lower:
+                    return header_value.decode()
+            return None
 
         sse = SseServerTransport("/messages")
 
         async def app(scope, receive, send):
-            """Pure ASGI entrypoint for SSE support."""
+            """Pure ASGI entrypoint for SSE support with Iron Dome authentication."""
             if scope["type"] == "lifespan":
                 while True:
                     message = await receive()
@@ -1997,6 +1979,28 @@ if __name__ == "__main__":
 
             if scope["type"] == "http":
                 path = scope["path"]
+                
+                # --- IRON DOME: AUTHENTICATE ALL REQUESTS ---
+                auth_token = get_header(scope, "X-MCP-Auth-Token")
+                
+                # Allow /health endpoint without auth (for Docker healthchecks)
+                if path == "/health":
+                    response = Response("OK", status_code=200)
+                    await response(scope, receive, send)
+                    return
+                
+                # Validate token for all other endpoints
+                if auth_token != MCP_AUTH_TOKEN:
+                    print(f"🚫 Iron Dome: BLOCKED unauthorized request to {path}", file=sys.stderr)
+                    print(f"   Received token: {auth_token[:8] if auth_token else 'None'}...", file=sys.stderr)
+                    response = Response(
+                        "🚫 IRON DOME: Unauthorized. Valid X-MCP-Auth-Token header required.",
+                        status_code=403
+                    )
+                    await response(scope, receive, send)
+                    return
+                
+                # Authenticated - proceed normally
                 if path == "/sse":
                     async with sse.connect_sse(scope, receive, send) as (read_stream, write_stream):
                         await mcp.run(read_stream, write_stream, mcp.create_initialization_options())
@@ -2009,4 +2013,6 @@ if __name__ == "__main__":
                 return
 
         print("🚀 Starting Graph-Native Core (SSE/ASGI) on port 8000...", file=sys.stderr)
+        print("🛡️  Iron Dome: Token authentication ACTIVE", file=sys.stderr)
         uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+

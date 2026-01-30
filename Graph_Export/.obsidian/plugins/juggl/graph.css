@@ -144,28 +144,12 @@ node.type-module {
     shape: ellipse;
 }
 
-/* Pain Points: Red */
-node.tag-PainPoints,
-node[type *="Pain Points"],
-node[label *="Pain Points"],
-node[id *="Pain Points"],
-node[tag="#PainPoints"] {
-    background-color: #EF5350;
-    border-color: #B71C1C;
-}
-
 /* Requirements: Orange-Yellow (Overrides Code if it overlaps) */
 node.tag-Requirements,
 node.tag-graph-requirement,
 node.type-requirement,
 node[type="Requirement"],
 node[type="Requirements"],
-node[uid *="REQ-"],
-node[uid *="REQ_"],
-node[id *="REQ-"],
-node[id *="REQ_"],
-node[label *="REQ-"],
-node[label *="REQ_"],
 node[tag="#Requirements"] {
     background-color: #FFA726;
     border-color: #EF6C00;
@@ -180,10 +164,6 @@ node.tag-graph-domain,
 node.type-domain,
 node[type="Domain"],
 node[type="Domain Entities"],
-node[uid *="DOMAIN-"],
-node[uid *="DOMAIN_"],
-node[id *="Domain"],
-node[label *="DOMAIN"],
 node[tag="#DomainEntities"] {
     background-color: #66BB6A;
     border-color: #2E7D32;
@@ -197,9 +177,6 @@ node.tag-graph-spec,
 node.type-spec,
 node[type="Spec"],
 node[type="Specification"],
-node[uid *="SPEC-"],
-node[uid *="SPEC_"],
-node[id *="SPEC-"],
 node[id *="SPEC_"] {
     background-color: #4DB6AC;
     border-color: #00796B;
@@ -212,12 +189,10 @@ node[id *="SPEC_"] {
 node.tag-graph-idea,
 node.type-idea,
 node[type="Idea"],
-node[uid *="IDEA-"],
-node[uid *="IDEA_"],
-node[id *="IDEA-"],
 node[id *="IDEA_"] {
     background-color: #FF40FF;
-    border-color: #FBC02D;
+    border-color: #000000;
+    border-width: 2px;
     shape: round-rectangle;
     width: 32px;
     height: 32px;
@@ -227,9 +202,6 @@ node[id *="IDEA_"] {
 node.tag-graph-task,
 node.type-task,
 node[type="Task"],
-node[uid *="TASK-"],
-node[uid *="TASK_"],
-node[id *="TASK-"],
 node[id *="TASK_"] {
     background-color: #7986CB;
     border-color: #303F9F;
@@ -250,22 +222,17 @@ node[kind="goal"] {
     font-weight: bold;
 }
 
-/* Epic: Deep Gold - Phase 3.1.4+: High-level initiatives */
-node[type="Epic"],
-node.type-epic,
-node.tag-graph-epic,
-node[uid *="EPIC-"],
-node[uid *="EPIC_"],
-node[id *="EPIC-"],
-node[id *="EPIC_"],
-node[label *="EPIC-"],
-node[label *="EPIC_"] {
-    background-color: #FFA500;
-    border-color: #FF8C00;
-    border-width: 4px;
-    width: 35px;
-    height: 35px;
-    shape: hexagon;
+/* Bug */
+node[type="Bug"],
+node.type-bug,
+node.tag-graph-bug,
+node[type="Bug"],
+node[label *="Bug_"] {
+    background-color: #DE2021;
+    border-color: #B71C1C;
+    border-width: 6px;
+    width: 15px;
+    height: 15px;
     font-weight: bold;
     font-size: 14px;
 }

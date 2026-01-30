@@ -24,6 +24,7 @@ TYPE_TO_FOLDER = {
     "Requirement": "4_Requirements",
     "Domain": "5_Domain",
     "Roadmap": "2_Specs",
+    "SpecItem": "2_Specs/Items",
     "File": "6_Code/Files",
     "Class": "6_Code/Classes",
     "Function": "6_Code/Functions",
@@ -193,36 +194,101 @@ class GraphSync:
         body.append(f"> **ID:** `{uid}` | **Status:** `{status}`")
         body.append("")
 
-        if description:
+        # Content / Description Handling
+        # PRIORITY: Content (Full Body) > Description (Metadata)
+        # If Content exists, it usually subsumes the Description (as per import logic).
+        # We render Content under the "## Description" header.
+        
+        content = props.get('content')
+        
+        if content:
+            body.append("## Description")
+            # normalization check for legacy title
+            check_content = content.strip()
+            if check_content.startswith(f"# {title}"):
+                 lines = check_content.split('\n')
+                 content = "\n".join(lines[1:]).strip()
+            
+            body.append(content)
+            body.append("")
+        elif description:
+            # Fallback if no content but description exists
             body.append("## Description")
             body.append(description)
             body.append("")
-            
-        # Content (Full Body)
-        content = props.get('content')
-        if content:
-             # Just append the content directly without wrapping it in "## Content"
-             # This allows full markdown documents to be synched properly.
-             body.append(content)
-             body.append("")
          
         return "\n".join(fm_lines + body)
 
     def extract_body_from_markdown(self, file_path: str) -> str:
         """
         Extracts the body (text after frontmatter) from an existing markdown file.
+        ROBUST VERSION: Strips Frontmatter, IDs, Headers, and Context blocks to prevent duplication.
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Simple Frontmatter extraction
+            # 1. Remove Frontmatter (possibly multiple)
+            # Find the LAST instance of "---\n" followed by content
+            # We assume frontmatter is at the top.
             if content.startswith("---"):
-                parts = content.split("---", 2)
+                parts = content.split("---")
                 if len(parts) >= 3:
-                    return parts[2].strip()
-            return content
-        except Exception:
+                     # parts[0] is empty, parts[1] is FM, parts[2:] is Body (potentially with more junk)
+                     # We take the LAST part as the body candidate if multiple FMs exist due to bugs
+                     content = parts[-1].strip()
+
+            # DUPLICATION FIX: Strip conflict markers
+            conflict_marker = "## 🔄 SYNC CONFLICT: Database Version"
+            if conflict_marker in content:
+                content = content.split(conflict_marker)[0].strip()
+
+            lines = content.split('\n')
+            clean_lines = []
+            
+            # 2. State Machine to skip "System Generated" headers
+            # We want to skip:
+            # - Metadata blocks like "> [!abstract] ..."
+            # - Primary Titles like "# Title" (because we regenerate them)
+            # - Empty lines at start
+            
+            skipping_metadata = True
+            
+            for line in lines:
+                sline = line.strip()
+                
+                if skipping_metadata:
+                    # Skip empty lines at start
+                    if not sline:
+                        continue
+                        
+                    # Skip Title (H1)
+                    if sline.startswith("# "):
+                        continue
+                        
+                    # Skip Context/Status blocks
+                    if sline.startswith("> "):
+                        continue
+                    
+                    # Skip Bold Labels
+                    if sline.startswith("**ID:**") or sline.startswith("**Type:**") or sline.startswith("**Status:**"):
+                        continue
+                        
+                    # Skip "## Description" or "## Content" headers
+                    if sline == "## Description" or sline == "## Content":
+                        continue
+                        
+                    # If we reach here, we found the first line of real content!
+                    skipping_metadata = False
+                    clean_lines.append(line)
+                else:
+                    # We are in the body - keep everything
+                    clean_lines.append(line)
+            
+            return "\n".join(clean_lines).strip()
+            
+        except Exception as e:
+            print(f"⚠️ Error extracting body from {file_path}: {e}")
             return ""
 
     def sync_node(self, uid: str, sync_connected: bool = False):
@@ -238,6 +304,12 @@ class GraphSync:
             return None
 
         node_type = node_data['type']
+        
+        # SKIP SYSTEM NODES (Clean Slate Architecture)
+        if node_type in ['Constraint', 'Action', 'NodeType']:
+            # print(f"ℹ️ GraphSync: Skipping system node {uid} (Type: {node_type})")
+            return None
+
         subfolder = TYPE_TO_FOLDER.get(node_type, "9_Unclassified")
         filename = f"{uid}.md"
         safe_filename = filename.replace("/", "_").replace("\\", "_")
@@ -258,10 +330,21 @@ class GraphSync:
         if os.path.exists(file_path):
              existing_body = self.extract_body_from_markdown(file_path).strip()
         
-        if db_content and existing_body and db_content != existing_body:
+        # NORMALIZATION:
+        # Collapse multiple newlines to single newline for comparison purposes only
+        # This handles the case where DB has "A\n\nB" and file has "A\nB" or vice versa
+        def normalize(text):
+            return "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+        db_norm = normalize(db_content)
+        file_norm = normalize(existing_body)
+
+        if db_content and existing_body and db_norm != file_norm:
             # CONFLICT DETECTED
-            # We trust the local file more (User editing in Obsidian)
-            # But we must preserve DB version and flag it.
+            print(f"⚠️ Conflict details for {uid}:")
+            # print(f"DB len: {len(db_content)} vs File len: {len(existing_body)}")
+            # print(f"DB norm: {len(db_norm)} vs File norm: {len(file_norm)}")
+            
             conflict_detected = True
             node_data['props']['content'] = existing_body # Render with local content
             

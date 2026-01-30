@@ -2,13 +2,98 @@
 uid: "SPEC-Graph_Physics"
 title: "SPEC-Graph_Physics"
 type: "Spec"
+project_id: "graphmcp"
 status: "unknown"
 tags: [graph/spec, state/unknown]
 cssclasses: [juggl-node, type-spec, premium-card]
 decomposes:
-  - "[[REQ-YAML_LINKS_ONLY]]"
-  - "[[REQUIREMENT-TRE_OVANIE_AVTORIZATSII_POLZOVATELEY]]"
-  - "[[REQUIREMENT-TRE_OVANIE__EZOPASNOSTI_API]]"
+  - "[[SPEC-ITEM-1.2.1]]"
+  - "[[SPEC-ITEM-1.2.2]]"
+  - "[[SPEC-ITEM-1.2.3]]"
+  - "[[SPEC-ITEM-1.3.1]]"
+  - "[[SPEC-ITEM-1.3.2]]"
+  - "[[SPEC-ITEM-1.3.3]]"
+  - "[[SPEC-ITEM-1.4.1]]"
+  - "[[SPEC-ITEM-1.4.2]]"
+  - "[[SPEC-ITEM-1.4.3]]"
+  - "[[SPEC-ITEM-1.5.1]]"
+  - "[[SPEC-ITEM-1.5.2]]"
+  - "[[SPEC-ITEM-1.5.3]]"
+  - "[[SPEC-ITEM-2.1.1]]"
+  - "[[SPEC-ITEM-2.1.2]]"
+  - "[[SPEC-ITEM-2.1.3]]"
+  - "[[SPEC-ITEM-2.2.1]]"
+  - "[[SPEC-ITEM-2.2.2]]"
+  - "[[SPEC-ITEM-2.2.3]]"
+  - "[[SPEC-ITEM-2.3.1]]"
+  - "[[SPEC-ITEM-2.3.2]]"
+  - "[[SPEC-ITEM-2.3.3]]"
+  - "[[SPEC-ITEM-3.1.1]]"
+  - "[[SPEC-ITEM-3.1.10]]"
+  - "[[SPEC-ITEM-3.1.2]]"
+  - "[[SPEC-ITEM-3.1.3]]"
+  - "[[SPEC-ITEM-3.1.4]]"
+  - "[[SPEC-ITEM-3.1.5]]"
+  - "[[SPEC-ITEM-3.1.6]]"
+  - "[[SPEC-ITEM-3.1.7]]"
+  - "[[SPEC-ITEM-3.1.8]]"
+  - "[[SPEC-ITEM-3.1.9]]"
+  - "[[SPEC-ITEM-3.2.1]]"
+  - "[[SPEC-ITEM-3.2.2]]"
+  - "[[SPEC-ITEM-3.2.3]]"
+  - "[[SPEC-ITEM-3.2.4]]"
+  - "[[SPEC-ITEM-3.2.5]]"
+  - "[[SPEC-ITEM-3.2.6]]"
+  - "[[SPEC-ITEM-3.3.1]]"
+  - "[[SPEC-ITEM-3.3.2]]"
+  - "[[SPEC-ITEM-3.3.3]]"
+  - "[[SPEC-ITEM-3.3.4]]"
+  - "[[SPEC-ITEM-3.4.1]]"
+  - "[[SPEC-ITEM-3.4.2]]"
+  - "[[SPEC-ITEM-3.4.3]]"
+  - "[[SPEC-ITEM-3.4.4]]"
+  - "[[SPEC-ITEM-3.4.5]]"
+  - "[[SPEC-ITEM-3.4.6]]"
+  - "[[SPEC-ITEM-3.4.7]]"
+  - "[[SPEC-ITEM-3.4.8]]"
+  - "[[SPEC-ITEM-4.1.1]]"
+  - "[[SPEC-ITEM-4.1.2]]"
+  - "[[SPEC-ITEM-4.1.3]]"
+  - "[[SPEC-ITEM-4.2.1]]"
+  - "[[SPEC-ITEM-4.2.2]]"
+  - "[[SPEC-ITEM-4.3.1]]"
+  - "[[SPEC-ITEM-4.3.2]]"
+  - "[[SPEC-ITEM-4.4.1]]"
+  - "[[SPEC-ITEM-4.4.2]]"
+  - "[[SPEC-ITEM-4.4.3]]"
+  - "[[SPEC-ITEM-4.5.2.1]]"
+  - "[[SPEC-ITEM-4.5.2.2]]"
+  - "[[SPEC-ITEM-4.5.2.3]]"
+  - "[[SPEC-ITEM-4.5.2.4]]"
+  - "[[SPEC-ITEM-4.5.2.5]]"
+  - "[[SPEC-ITEM-5.1.1]]"
+  - "[[SPEC-ITEM-5.1.2]]"
+  - "[[SPEC-ITEM-5.1.3]]"
+  - "[[SPEC-ITEM-6.1.1]]"
+  - "[[SPEC-ITEM-6.1.2]]"
+  - "[[SPEC-ITEM-6.1.3]]"
+  - "[[SPEC-ITEM-6.1.4]]"
+  - "[[SPEC-ITEM-6.2.1]]"
+  - "[[SPEC-ITEM-6.2.2]]"
+  - "[[SPEC-ITEM-6.2.3]]"
+  - "[[SPEC-ITEM-6.3.1]]"
+  - "[[SPEC-ITEM-6.3.2]]"
+  - "[[SPEC-ITEM-6.3.3]]"
+  - "[[SPEC-ITEM-6.3.4]]"
+  - "[[SPEC-ITEM-7.1.1]]"
+  - "[[SPEC-ITEM-7.1.2]]"
+  - "[[SPEC-ITEM-7.1.3]]"
+  - "[[SPEC-ITEM-7.1.4]]"
+  - "[[SPEC-ITEM-7.1.5]]"
+  - "[[SPEC-ITEM-7.5.1]]"
+  - "[[SPEC-ITEM-7.5.2]]"
+  - "[[SPEC-ITEM-7.5.3]]"
+  - "[[SPEC-ITEM-7.5.4]]"
 ---
 # SPEC-Graph_Physics
 
@@ -16,12 +101,13 @@ decomposes:
 > **ID:** `SPEC-Graph_Physics` | **Status:** `unknown`
 
 ## Description
-> This node defines the Allowed Transitions and Tool Availability based on the Agent's Location.
+## Evolution Protocol
+To modify these rules, the Agent must be in **Genesis Mode** or use the `propose_amendment` tool (Future).
 
-# Спецификация Физики Графа
 
-> [!abstract] Spec Context
-> **ID:** `SPEC-Graph_Physics` | **Status:** `draft`
+## 🔄 SYNC CONFLICT: Database Version
+> [!warning] Database content differs from local file.
+> Below is the version from Neo4j Graph:
 
 ## Назначение
 
@@ -727,63 +813,3 @@ CREATE (c)-[:RESTRICTS]->(a);
 ---
 
 *Обновлено: 2026-01-28 | Версия: 3.0 | Протокол Iron Dome*
-
-
-## 🔄 SYNC CONFLICT: Database Version
-> [!warning] Database content differs from local file.
-> Below is the version from Neo4j Graph:
-
-# Graph Physics Definition (The Laws)
-
-> This node defines the Allowed Transitions and Tool Availability based on the Agent's Location.
-
-## Transitions (The "Doors")
-
-| Source Type | Target Type | Action Name | Required Tool |
-| :--- | :--- | :--- | :--- |
-| **Idea** | **Spec** | `decompose` | `create_concept(type='Spec')` |
-| **Idea** | **Task** | `assign` | `create_concept(type='Task')` |
-| **Spec** | **Requirement** | `refine` | `create_concept(type='Requirement')` |
-| **Spec** | **Task** | `assign` | `create_concept(type='Task')` |
-| **Requirement** | **File** | `implement` | `create_concept(type='File')` |
-| **Requirement** | **Task** | `assign` | `create_concept(type='Task')` |
-| **Task** | **Idea** | `brainstorm` | `create_concept(type='Idea')` |
-
-## Constraints (The "Walls")
-
-### Global Tools
-*   `look_around`
-*   `move_to`
-*   `read_graph`
-
-### Contextual Tools
-
-#### Context: `(:Idea)`
-**Allowed:**
-*   `create_concept` (Only for `Spec`)
-*   `link_nodes` (Only `DEPENDS_ON` between Ideas)
-
-#### Context: `(:Spec)`
-**Allowed:**
-*   `create_concept` (Only for `Requirement`)
-*   `link_nodes` (Only `DECOMPOSES` to Req)
-
-#### Context: `(:Requirement)`
-**Allowed:**
-*   `create_concept` (Only for `File` stub)
-
-#### Context: `(:File)`
-**Allowed:**
-*   `read_content`
-*   `edit_content` (The "Holy Grail" - write access)
-*   `grep_search`
-
-#### Context: `(:Task)`
-**Allowed:**
-*   `submit_plan`
-*   `finish_task`
-
----
-
-## Evolution Protocol
-To modify these rules, the Agent must be in **Genesis Mode** or use the `propose_amendment` tool (Future).

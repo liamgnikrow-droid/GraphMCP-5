@@ -1,0 +1,14 @@
+.DS_Store
+**/ .DS_Store
+__pycache__/
+**/__pycache__/
+*.log
+node_modules/
+.env
+BUG-Conflict-*
+*.pyc
+duplicated_description_files.txt
+mcp_client_adapter.js
+test_codebase_map.js
+auth_debug.log
+.mcp

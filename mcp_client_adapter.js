@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * MCP SSE Client Adapter
+ * MCP SSE Client Adapter with Iron Dome Authentication
+ * 
  * Bridges stdio (standard MCP client input/output) to SSE (Server-Sent Events) MCP server.
- * Usage: node mcp_client_adapter.js
- * The adapter connects to http://localhost:8000/sse and relays messages.
+ * 
+ * SECURITY: This adapter includes the MCP_AUTH_TOKEN in all requests.
+ * Only this authorized adapter can communicate with the MCP server.
+ * Direct bypass attempts without the token will be rejected (403).
+ * 
+ * Usage: MCP_AUTH_TOKEN=xxx node mcp_client_adapter.js
  */
 
 const EventSourceLib = require('eventsource');
@@ -13,26 +18,37 @@ const fetchLib = require('node-fetch');
 const fetch = fetchLib.default || fetchLib;
 
 const SSE_URL = process.env.MCP_SSE_URL || 'http://localhost:8000/sse';
+const AUTH_TOKEN = process.env.MCP_AUTH_TOKEN;
+
+// Validate token is provided
+if (!AUTH_TOKEN) {
+    console.error('[MCP Adapter] 🚫 ERROR: MCP_AUTH_TOKEN environment variable is required!');
+    console.error('[MCP Adapter] This adapter cannot connect without authentication.');
+    process.exit(1);
+}
+
 // Initial POST URL is unknown, will be provided by server via SSE 'endpoint' event
 let postUrl = null;
-
 let eventSource;
 let messageQueue = []; // Buffer messages until we have a postUrl
 
-// Connect to SSE endpoint
+// Connect to SSE endpoint with authentication
 function connect() {
-    console.error(`[MCP Adapter] Connecting to ${SSE_URL}...`);
+    console.error(`[MCP Adapter] 🔒 Connecting to ${SSE_URL} with Iron Dome authentication...`);
 
-    eventSource = new EventSource(SSE_URL);
+    // EventSource with custom headers for authentication
+    eventSource = new EventSource(SSE_URL, {
+        headers: {
+            'X-MCP-Auth-Token': AUTH_TOKEN
+        }
+    });
 
     eventSource.onopen = () => {
-        console.error('[MCP Adapter] Connected to SSE server');
+        console.error('[MCP Adapter] ✅ Connected to SSE server (authenticated)');
     };
 
     // Handle endpoint event (contains the URL for POST requests)
     eventSource.addEventListener('endpoint', (event) => {
-        // The event data is the relative or absolute URL. 
-        // If relative, we need to resolve it against SSE_URL base.
         const endpointPath = event.data.trim();
 
         // Simple resolution logic
@@ -44,7 +60,7 @@ function connect() {
             postUrl = `${baseUrl.protocol}//${baseUrl.host}${endpointPath}`;
         }
 
-        console.error(`[MCP Adapter] Received endpoint: ${postUrl}`);
+        console.error(`[MCP Adapter] 📍 Received endpoint: ${postUrl}`);
         // Increased delay to ensure server-side mcp.run is ready
         setTimeout(() => flushQueue(), 2000);
     });
@@ -55,9 +71,12 @@ function connect() {
     };
 
     eventSource.onerror = (error) => {
-        console.error('[MCP Adapter] SSE Error:', error);
-        // Don't close immediately on error, EventSource retries automatically often.
-        // But if closed, we might need to reconnect logic.
+        console.error('[MCP Adapter] ❌ SSE Error:', error);
+        // Check if it's an auth error
+        if (error.status === 403) {
+            console.error('[MCP Adapter] 🚫 Authentication failed! Check MCP_AUTH_TOKEN.');
+            process.exit(1);
+        }
     };
 }
 
@@ -70,7 +89,10 @@ async function sendPost(message) {
     try {
         const response = await fetch(postUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-MCP-Auth-Token': AUTH_TOKEN  // Iron Dome: Include token in all requests
+            },
             body: JSON.stringify(message)
         });
 
@@ -78,6 +100,10 @@ async function sendPost(message) {
             console.error(`[MCP Adapter] POST Error: ${response.status} ${response.statusText}`);
             const text = await response.text();
             console.error(`[MCP Adapter] Response: ${text}`);
+
+            if (response.status === 403) {
+                console.error('[MCP Adapter] 🚫 Iron Dome rejected request. Token may be invalid.');
+            }
         }
     } catch (error) {
         console.error('[MCP Adapter] Failed to relay message:', error);

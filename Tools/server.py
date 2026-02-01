@@ -1100,7 +1100,6 @@ def _propagate_implementation_links(driver, source_uid, target_uid):
     If a Child (Class/Function) implements a Requirement, 
     its Parent (File) must also implement it.
     """
-    print(f"DEBUG: Entering propagation for {source_uid} -> {target_uid}")
     query = """
     MATCH (child {uid: $source_uid})
     MATCH (child)-[:IMPLEMENTS]->(req {uid: $target_uid})
@@ -1116,13 +1115,14 @@ def _propagate_implementation_links(driver, source_uid, target_uid):
         records, _, _ = driver.execute_query(query, 
             {"source_uid": source_uid, "target_uid": target_uid}, 
             database_="neo4j")
-        
-        print(f"DEBUG: Propagation query result count: {len(records)}")
             
         for r in records:
-            print(f"   ↳ Echo: {r['type']} {r['parent.uid']} also IMPLEMENTS {target_uid}", file=sys.stderr)
+            parent_uid = r['parent.uid']
+            # Sync parent to update frontmatter
+            sync_tool.sync_node(parent_uid)
+            
             # Recursive propagation (if Class inside File)
-            _propagate_implementation_links(driver, r['parent.uid'], target_uid)
+            _propagate_implementation_links(driver, parent_uid, target_uid)
             
     except Exception as e:
         print(f"⚠️ Echo propagation failed: {e}", file=sys.stderr)

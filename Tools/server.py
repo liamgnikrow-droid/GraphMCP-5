@@ -1961,8 +1961,10 @@ async def tool_find_orphans(arguments: dict) -> list[types.TextContent]:
             
             island_query = """
             MATCH (root:Idea {uid: 'IDEA-Genesis'})
-            // Get all nodes in the Main Component
-            CALL apoc.path.subgraphNodes(root, {}) YIELD node as connected_node
+            // Get all nodes in the Main Component via VERTICAL relationships only
+            // DECOMPOSES: Hierarchy (Idea->Spec->Req... File->Class->Func)
+            // IMPLEMENTS: Realization (File->Req...)
+            CALL apoc.path.subgraphNodes(root, {relationshipFilter: 'DECOMPOSES|IMPLEMENTS'}) YIELD node as connected_node
             WITH collect(connected_node) as main_component_nodes
             
             MATCH (n)

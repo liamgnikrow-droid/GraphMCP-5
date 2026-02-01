@@ -8,6 +8,8 @@ name: "tool_explain_physics"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION]]"
 ---
 # tool_explain_physics
 

@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "4350986729fcb9d6",
+        "id": "df1c455cf78ff836",
         "type": "tabs",
         "children": [
           {
-            "id": "476224ec753648fe",
+            "id": "82e15a9d834226c4",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "SPEC-Graph_Physics"
+              "title": "New tab"
             }
           }
         ]
@@ -78,7 +74,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -156,13 +153,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "2_Specs/SPEC-Graph_Physics.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of SPEC-Graph_Physics"
+              "title": "Outline"
             }
           },
           {
@@ -205,40 +201,41 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "476224ec753648fe",
+  "active": "82e15a9d834226c4",
   "lastOpenFiles": [
     "4_Requirements/REQUIREMENT-INFRASTRUKTURA_PROEKTA.md",
-    "6_Code/Files/FILE-Tools_maintenance_intelligent_link_files_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_force_link_files_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_force_full_sync_py.md",
-    "6_Code/Files/FILE-Tools_bootstrap_schema_py.md",
-    "6_Code/Files/FILE-Переписка по созданию v_5_md.md",
+    "6_Code/Files/FILE-Tools_maintenance_migrate_implements_links_py.md",
+    "2_Specs/SPEC-Graph_Physics.md",
+    "6_Code/Files/FILE-Tools_maintenance_purge_junk_nodes_py.md",
+    "5_Domain/DOMAIN-O_SLUZHIVANIE_GRAFA__MAINTENANCE.md",
+    "5_Domain",
     "6_Code/Files/FILE-test_integrity_internal_js.md",
-    "6_Code/Files/FILE-mapping_inventory_json.md",
-    "6_Code/Files/FILE-duplicated_description_files_txt.md",
-    "6_Code/Files/FILE-cline_mcp_settings_json.md",
-    "6_Code/Files/FILE-auth_debug_log.md",
-    "6_Code/Files/FILE-ROADMAP_md.md",
-    "6_Code/Files/FILE-AGENT_INSTRUCTIONS_md.md",
-    "6_Code/Files/FILE-_gitignore.md",
-    "6_Code/Files/FILE-Tools_maintenance_finalize_cleanup_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_final_link_tools_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_final_fix_spec_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_export_mapping_inventory_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_enforce_physics_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_check_orphaned_files_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_check_islands_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_check_db_node_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_audit_file_links_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_apply_semantic_links_py.md",
-    "6_Code/Files/FILE-Tools_maintenance_aggressive_clean_py.md",
-    "6_Code/Files/FILE-Tools_hard_reset_duplicates_py.md",
+    "6_Code/Files/FILE-md_implementation_plan_md.md",
+    "6_Code/Files/FILE-md_SECURITY_CONSTRAINTS_md.md",
+    "6_Code/Files/FILE-md_README_md.md",
+    "6_Code/Files/FILE-md_NEXT_STEPS_md.md",
+    "6_Code/Files/FILE-md_GENESIS_MANIFESTO_md.md",
+    "6_Code/Files/FILE-Tools_test_server_logic_py.md",
+    "6_Code/Files/FILE-Tools_test_middleware_py.md",
+    "6_Code/Files/FILE-Tools_test_format_cypher_py.md",
+    "Graph_Physics/CON-One_Spec.md",
+    "Graph_Physics/CON-One_Idea.md",
+    "Graph_Physics/CON-No_WikiLinks.md",
+    "Graph_Physics/CON-Russian_Language.md",
+    "Graph_Physics/ACT-update_node.md",
+    "Graph_Physics/ACT-propose_change.md",
+    "Graph_Physics/ACT-delete_link.md",
+    "Graph_Physics/ACT-delete_node.md",
+    "Graph_Physics/ACT-link_nodes.md",
+    "Graph_Physics/ACT-create_domain_from_req.md",
+    "Graph_Physics/ACT-create_domain_from_spec.md",
+    "Graph_Physics/ACT-create_req.md",
+    "Graph_Physics",
     "2_Specs/Items",
     "9_Unclassified",
     "6_Code/Classes",
     "6_Code/Functions",
     "6_Code/Files",
-    "6_Code",
-    "Graph_Physics"
+    "6_Code"
   ]
 }

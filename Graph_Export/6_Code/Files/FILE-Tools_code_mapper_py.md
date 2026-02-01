@@ -12,7 +12,7 @@ tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[CLASS-Tools_code_mapper_py-CodeMapper]]"
-  - "[[CLASS-Tools_code_mapper_py-CodeVisitor]]"
+  - "[[CLASS-Tools_codebase_mapper_py-CodeVisitor]]"
 depends-on:
   - "[[FILE-Tools_server_py]]"
 implements:

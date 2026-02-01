@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "surgical_fix_spec.py"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # surgical_fix_spec.py
 

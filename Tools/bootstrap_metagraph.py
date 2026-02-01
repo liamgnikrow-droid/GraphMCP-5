@@ -32,6 +32,11 @@ CREATE (:NodeType {name: 'Spec', description: 'Техническая специ
 CREATE (:NodeType {name: 'Requirement', description: 'Функциональное требование', max_count: null});
 CREATE (:NodeType {name: 'Task', description: 'Задача от Human через чат', max_count: null});
 CREATE (:NodeType {name: 'Domain', description: 'Доменная модель, справочник терминов', max_count: null});
+CREATE (:NodeType {name: 'File', description: 'Source Code File', max_count: null});
+CREATE (:NodeType {name: 'Function', description: 'Code Function', max_count: null});
+CREATE (:NodeType {name: 'Class', description: 'Code Class', max_count: null});
+CREATE (:NodeType {name: 'Action', description: 'System Action', max_count: null});
+CREATE (:NodeType {name: 'Constraint', description: 'System Constraint', max_count: null});
 
 // ===== ГЛОБАЛЬНЫЕ ДЕЙСТВИЯ =====
 CREATE (:Action {uid: 'ACT-look_around', tool_name: 'look_around', scope: 'global'});
@@ -43,6 +48,11 @@ CREATE (:Action {uid: 'ACT-read_node', tool_name: 'read_node', scope: 'global'})
 CREATE (:Action {uid: 'ACT-get_full_context', tool_name: 'get_full_context', scope: 'global'});
 CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'global'});
 CREATE (:Action {uid: 'ACT-refresh_knowledge', tool_name: 'refresh_knowledge', scope: 'global', description: 'Recalculates semantic embeddings for ALL nodes. Useful after manual edits or imports.'});
+CREATE (:Action {uid: 'ACT-find_orphans', tool_name: 'find_orphans', scope: 'global'});
+CREATE (:Action {uid: 'ACT-switch_project', tool_name: 'switch_project', scope: 'global'});
+CREATE (:Action {uid: 'ACT-map_codebase', tool_name: 'map_codebase', scope: 'global'});
+CREATE (:Action {uid: 'ACT-set_workflow', tool_name: 'set_workflow', scope: 'global'});
+CREATE (:Action {uid: 'ACT-illuminate_path', tool_name: 'illuminate_path', scope: 'global'});
 
 // ===== КОНТЕКСТНЫЕ ДЕЙСТВИЯ =====
 // Idea может создавать только Spec
@@ -79,9 +89,9 @@ MATCH (nt:NodeType {name: 'Requirement'}), (a:Action {uid: 'ACT-create_domain_fr
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // Все типы (кроме Domain) могут использовать общие действия
-MATCH (nt:NodeType) WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task']
+MATCH (nt:NodeType) WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
 WITH nt
-MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change', 'ACT-update_node']
+MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change', 'ACT-update_node', 'ACT-find_orphans', 'ACT-map_codebase', 'ACT-illuminate_path']
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== ОГРАНИЧЕНИЯ =====
@@ -132,6 +142,29 @@ MATCH (c:Constraint {uid: 'CON-No_WikiLinks'})
 WITH c
 MATCH (a:Action) WHERE a.tool_name = 'create_concept'
 CREATE (c)-[:RESTRICTS]->(a);
+
+// ===== СХЕМА СВЯЗЕЙ (ALLOWS_CONNECTION) =====
+// Разрешаем связывание системных нод
+
+// File -> Class/Function (DECOMPOSES)
+MATCH (f:NodeType {name: 'File'}), (c:NodeType {name: 'Class'})
+CREATE (f)-[:ALLOWS_CONNECTION {type: 'DECOMPOSES'}]->(c);
+
+MATCH (f:NodeType {name: 'File'}), (func:NodeType {name: 'Function'})
+CREATE (f)-[:ALLOWS_CONNECTION {type: 'DECOMPOSES'}]->(func);
+
+MATCH (c:NodeType {name: 'Class'}), (func:NodeType {name: 'Function'})
+CREATE (c)-[:ALLOWS_CONNECTION {type: 'DECOMPOSES'}]->(func);
+
+// Code Types -> Requirement (IMPLEMENTS)
+MATCH (f:NodeType {name: 'File'}), (r:NodeType {name: 'Requirement'})
+CREATE (f)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(r);
+
+MATCH (c:NodeType {name: 'Class'}), (r:NodeType {name: 'Requirement'})
+CREATE (c)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(r);
+
+MATCH (func:NodeType {name: 'Function'}), (r:NodeType {name: 'Requirement'})
+CREATE (func)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(r);
 
 MATCH (c:Constraint {uid: 'CON-One_Spec'}), (a:Action {uid: 'ACT-create_spec'})
 CREATE (c)-[:RESTRICTS]->(a);

@@ -10,6 +10,7 @@ cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_check_orphaned_files_py-check_orphaned_files]]"
 implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
   - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---
 # check_orphaned_files.py

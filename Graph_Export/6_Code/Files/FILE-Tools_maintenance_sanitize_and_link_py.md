@@ -9,6 +9,8 @@ tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_sanitize_and_link_py-sanitize_and_link]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # sanitize_and_link.py
 

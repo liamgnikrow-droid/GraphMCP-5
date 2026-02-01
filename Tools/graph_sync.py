@@ -3,6 +3,8 @@ import json
 import glob
 from neo4j import GraphDatabase
 import time
+import yaml
+import re
 
 import sys
 # Add parent directory to path if running as script
@@ -219,80 +221,170 @@ class GraphSync:
          
         return "\n".join(fm_lines + body)
 
-    def extract_body_from_markdown(self, file_path: str) -> str:
+    def parse_markdown_file(self, file_path: str):
         """
-        Extracts the body (text after frontmatter) from an existing markdown file.
-        ROBUST VERSION: Strips Frontmatter, IDs, Headers, and Context blocks to prevent duplication.
+        Robustly parses a Markdown file into Frontmatter (dict) and Body (str).
+        Returns: (frontmatter_dict, body_string)
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 1. Remove Frontmatter (possibly multiple)
-            # Find the LAST instance of "---\n" followed by content
-            # We assume frontmatter is at the top.
-            if content.startswith("---"):
-                parts = content.split("---")
-                if len(parts) >= 3:
-                     # parts[0] is empty, parts[1] is FM, parts[2:] is Body (potentially with more junk)
-                     # We take the LAST part as the body candidate if multiple FMs exist due to bugs
-                     content = parts[-1].strip()
-
+            lines = content.split('\n')
+            fm_lines = []
+            body_start_idx = 0
+            
+            # 1. Extract Frontmatter
+            if lines and lines[0].strip() == "---":
+                for i in range(1, len(lines)):
+                    if lines[i].strip() == "---":
+                        body_start_idx = i + 1
+                        break
+                    fm_lines.append(lines[i])
+            
+            frontmatter = {}
+            if fm_lines:
+                try:
+                    frontmatter = yaml.safe_load("\n".join(fm_lines)) or {}
+                except yaml.YAMLError as e:
+                    print(f"⚠️ YAML Error in {file_path}: {e}")
+            
+            # DEBUG
+            print(f"DEBUG: Parsed FM for {file_path}: {frontmatter.keys()}")
+            print(f"DEBUG: Props: {frontmatter}")
+            
+            # 2. Extract Body
+            raw_body = "\n".join(lines[body_start_idx:]).strip()
+            
             # DUPLICATION FIX: Strip conflict markers
             conflict_marker = "## 🔄 SYNC CONFLICT: Database Version"
-            if conflict_marker in content:
-                content = content.split(conflict_marker)[0].strip()
-
-            lines = content.split('\n')
+            if conflict_marker in raw_body:
+                raw_body = raw_body.split(conflict_marker)[0].strip()
+            
+            # 3. Clean Body (Skip System Headers)
+            body_lines = raw_body.split('\n')
             clean_lines = []
-            
-            # 2. State Machine to skip "System Generated" headers
-            # We want to skip:
-            # - Metadata blocks like "> [!abstract] ..."
-            # - Primary Titles like "# Title" (because we regenerate them)
-            # - Empty lines at start
-            
             skipping_metadata = True
             
-            for line in lines:
+            for line in body_lines:
                 sline = line.strip()
-                
                 if skipping_metadata:
-                    # Skip empty lines at start
-                    if not sline:
-                        continue
-                        
-                    # Skip Title (H1)
-                    if sline.startswith("# "):
-                        continue
-                        
-                    # Skip Context/Status blocks
-                    if sline.startswith("> "):
-                        continue
-                    
-                    # Skip Bold Labels
-                    if sline.startswith("**ID:**") or sline.startswith("**Type:**") or sline.startswith("**Status:**"):
-                        continue
-                        
-                    # Skip "## Description" or "## Content" headers
-                    if sline == "## Description" or sline == "## Content":
-                        continue
-                        
-                    # If we reach here, we found the first line of real content!
+                    if not sline: continue
+                    if sline.startswith("# "): continue # Skip H1
+                    if sline.startswith("> "): continue # Skip Context
+                    if sline.startswith("**ID:**") or sline.startswith("**Type:**") or sline.startswith("**Status:**"): continue
+                    if sline == "## Description" or sline == "## Content": continue
                     skipping_metadata = False
                     clean_lines.append(line)
                 else:
-                    # BODY CLEANUP: If we see ANOTHER "## Description", it's a duplication bug. Skip it.
-                    if sline == "## Description" or sline == "## Content":
-                        continue
-
+                    if sline == "## Description" or sline == "## Content": continue
                     clean_lines.append(line)
             
-            return "\n".join(clean_lines).strip()
-            
+            return frontmatter, "\n".join(clean_lines).strip()
+
         except Exception as e:
-            print(f"⚠️ Error extracting body from {file_path}: {e}")
-            return ""
+            print(f"⚠️ Error parsing markdown {file_path}: {e}")
+            return {}, ""
+
+    def extract_body_from_markdown(self, file_path: str) -> str:
+        """
+        Wrapper for backward compatibility. Returns only body.
+        """
+        _, body = self.parse_markdown_file(file_path)
+        return body
+
+    def push_file_to_db(self, file_path: str):
+        """
+        Reads a local Markdown file and updates the Neo4j Node.
+        """
+        print(f"🔄 GraphSync: Pushing {file_path} to Neo4j...")
+        
+        # 1. Parse File
+        frontmatter, body = self.parse_markdown_file(file_path)
+        
+        uid = frontmatter.get('uid')
+        if not uid:
+            print(f"⚠️  Skipping {file_path}: No UID in frontmatter.")
+            return
+
+        # 2. Prepare Properties
+        props = {}
+        # Map Standard YAML keys to DB properties
+        keys_to_sync = ['title', 'description', 'status', 'project_id']
+        for k in keys_to_sync:
+            if k in frontmatter:
+                props[k] = frontmatter[k]
+        
+        # Sync Content
+        if body:
+            props['content'] = body
+            
+        # 3. DB Update
+        drv = self.get_driver()
+        
+        
+        # Determine Label for MERGE/CREATE
+        node_type = frontmatter.get('type')
+        if not node_type:
+            # Fallback: Try to fetch existing to update, or fail
+            print(f"⚠️  No 'type' in frontmatter for {uid}. Assuming update only.")
+            query_check = "MATCH (n {uid: $uid}) RETURN count(n) as c"
+            recs, _, _ = drv.execute_query(query_check, {"uid": uid}, database_="neo4j")
+            if recs[0]['c'] == 0:
+                print(f"❌ Node {uid} does not exist and no type provided. Cannot create.")
+                return
+
+        # A. Update Properties (and Create if needed)
+        set_clauses = []
+        for k, v in props.items():
+            set_clauses.append(f"n.{k} = ${k}")
+        
+        if set_clauses:
+            # If we know the type, use it in MERGE
+            if node_type:
+                # Sanitize type (simple alpha check)
+                safe_type = "".join(x for x in node_type if x.isalnum())
+                # Cypher doesn't allow dynamic labels in MERGE easily without APOC or string formatting
+                query = f"""
+                MERGE (n:{safe_type} {{uid: $uid}})
+                SET {", ".join(set_clauses)}, n.updated_at = datetime()
+                RETURN n
+                """
+            else:
+                # Update existing only
+                query = f"""
+                MATCH (n {{uid: $uid}})
+                SET {", ".join(set_clauses)}, n.updated_at = datetime()
+                RETURN n
+                """
+            
+            props['uid'] = uid
+            try:
+                drv.execute_query(query, props, database_="neo4j")
+                print(f"✅ Synced {uid} ({node_type or 'Existing'}) to DB")
+            except Exception as e:
+                print(f"❌ DB Sync Error for {uid}: {e}")
+
+        # B. Update Relationships (Optional Step: Sync Links from Frontmatter?)
+        # For now, we focusing on CONTENT sync. Link sync is riskier without full schema checks.
+        # But user asked for bi-directional. Let's do partial link sync (safe ones).
+        # We look for keys in YAML that match known relationships (implements, decomposes, etc)
+        # Note: Frontmatter usually has `implements: \n - "[[UID]]"`
+        
+        # (Link sync implementation deferred to avoid complexity in this step)
+
+
+
+    def get_file_path(self, uid: str, node_type: str) -> str:
+        """
+        Determines the absolute file path for a node.
+        """
+        subfolder = TYPE_TO_FOLDER.get(node_type, "9_Unclassified")
+        filename = f"{uid}.md"
+        safe_filename = filename.replace("/", "_").replace("\\", "_")
+        dir_path = os.path.join(WORKSPACE_ROOT, "Graph_Export", subfolder)
+        os.makedirs(dir_path, exist_ok=True)
+        return os.path.join(dir_path, safe_filename)
 
     def sync_node(self, uid: str, sync_connected: bool = False):
         """
@@ -309,18 +401,14 @@ class GraphSync:
         node_type = node_data['type']
         
         # SKIP SYSTEM NODES (Clean Slate Architecture)
-        if node_type in ['Constraint', 'Action', 'NodeType']:
+        # Note: We now ALLOW Action and Constraint to sync because they are part of architectural documentation.
+        # But we still skip purely internal schema nodes (NodeType).
+        if node_type in ['NodeType']:
             # print(f"ℹ️ GraphSync: Skipping system node {uid} (Type: {node_type})")
             return None
 
-        subfolder = TYPE_TO_FOLDER.get(node_type, "9_Unclassified")
-        filename = f"{uid}.md"
-        safe_filename = filename.replace("/", "_").replace("\\", "_")
-
-        dir_path = os.path.join(WORKSPACE_ROOT, "Graph_Export", subfolder)
-        os.makedirs(dir_path, exist_ok=True)
-
-        file_path = os.path.join(dir_path, safe_filename)
+        file_path = self.get_file_path(uid, node_type)
+        
         
         # === CONTENT MERGE STRATEGY ===
         # Priority 1: Content from Neo4j (if exists)

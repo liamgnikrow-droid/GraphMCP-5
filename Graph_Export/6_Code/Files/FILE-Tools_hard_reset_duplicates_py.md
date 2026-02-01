@@ -9,6 +9,8 @@ tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_hard_reset_duplicates_py-hard_reset_duplicates]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # hard_reset_duplicates.py
 

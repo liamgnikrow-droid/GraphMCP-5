@@ -9,6 +9,8 @@ tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_manual_link_final_py-manual_link_confirmed]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # manual_link_final.py
 

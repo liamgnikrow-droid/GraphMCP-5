@@ -7,7 +7,9 @@ status: "Canonical"
 tags: [graph/idea, state/canonical]
 cssclasses: [juggl-node, type-idea, premium-card]
 decomposes:
+  - "[[DOMAIN-O_SLUZHIVANIE_GRAFA__MAINTENANCE]]"
   - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
+  - "[[REQUIREMENT-YADRO_DOKUMENTATSII_PROEKTA]]"
   - "[[SPEC-Graph_Physics]]"
 ---
 # Genesis

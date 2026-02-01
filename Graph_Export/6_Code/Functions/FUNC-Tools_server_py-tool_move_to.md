@@ -8,6 +8,8 @@ name: "tool_move_to"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-TOOL__MOVE_TO__NAVIGATION]]"
 ---
 # tool_move_to
 

@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "purge_junk"
 tags: [graph/function, state/draft]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # purge_junk
 

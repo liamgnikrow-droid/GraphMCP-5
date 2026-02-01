@@ -9,6 +9,8 @@ tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_intelligent_link_files_py-intelligent_link_files]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # intelligent_link_files.py
 

@@ -9,6 +9,8 @@ tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_purge_specitems_py-purge_specitems]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # purge_specitems.py
 

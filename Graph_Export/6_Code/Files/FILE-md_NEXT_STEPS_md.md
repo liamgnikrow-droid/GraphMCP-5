@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "NEXT_STEPS.md"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-YADRO_DOKUMENTATSII_PROEKTA]]"
 ---
 # NEXT_STEPS.md
 

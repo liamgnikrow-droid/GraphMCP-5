@@ -28,12 +28,14 @@ services:
       # Hide system scripts from the Agent. It will see an empty folder.
       - /workspace/Tools
 
-
     # FIX PERMISSIONS
     command: /bin/sh -c "sudo chown -R node:node /workspace/.graphmcp /home/node/.antigravity /home/node/.gemini /home/node/.vscode-server && sleep infinity"
 
     networks:
-      - frontend-net  # <--- ONLY Frontend (Can talk to Core, but NOT DB)
+      - frontend-net # <--- ONLY Frontend (Can talk to Core, but NOT DB)
+    environment:
+      - MCP_AUTH_TOKEN=b7d1aa6b7ee609152a8bbe94813beab1446028e759c4dcdae3b16f6360e231eb
+      - MCP_SSE_URL=http://graphmcp-core:8000/sse
 
   # 2. ORCHESTRATOR CORE (MCP SERVER)
   graphmcp-core:
@@ -52,13 +54,13 @@ services:
       - WORKSPACE_ROOT=/workspace
       - PYTHONPATH=/opt/tools
       # IRON DOME: Authentication token for MCP access
-      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-b7d1aa6b7ee609152a8bbe94813beab1446028e759c4dcdae3b16f6360e231eb}
+      - MCP_AUTH_TOKEN=b7d1aa6b7ee609152a8bbe94813beab1446028e759c4dcdae3b16f6360e231eb
     command: [ "python", "/opt/tools/server.py" ]
     ports:
       - "8000:8000"
     networks:
       - frontend-net # Talk to IDE
-      - backend-net  # Talk to DB
+      - backend-net # Talk to DB
     depends_on:
       - neo4j-db
 
@@ -67,9 +69,9 @@ services:
     image: neo4j:5.15.0
     environment:
       - NEO4J_AUTH=neo4j/password
-      - NEO4J_PLUGINS=["graph-data-science"]
-      - NEO4J_dbms_security_procedures_unrestricted=gds.*
-      - NEO4J_dbms_security_procedures_allowlist=gds.*
+      - NEO4J_PLUGINS=["graph-data-science", "apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*,apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=gds.*,apoc.*
     ports:
       - "7474:7474"
       - "7687:7687"

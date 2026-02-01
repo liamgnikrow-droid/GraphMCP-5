@@ -8,6 +8,8 @@ name: "tool_get_full_context"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-TOOL__GET_FULL_CONTEXT__AGGREGATOR]]"
 ---
 # tool_get_full_context
 

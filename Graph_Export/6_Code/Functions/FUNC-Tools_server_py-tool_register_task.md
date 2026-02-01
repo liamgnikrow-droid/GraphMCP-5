@@ -8,6 +8,8 @@ name: "tool_register_task"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-TOOL__REGISTER_TASK__ENTRY_POINT]]"
 ---
 # tool_register_task
 

@@ -10,6 +10,7 @@ cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_check_islands_py-check_islands]]"
 implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
   - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---
 # check_islands.py

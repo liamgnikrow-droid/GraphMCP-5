@@ -11,6 +11,7 @@ cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[FUNC-Tools_maintenance_consolidate_graph_py-consolidate_graph]]"
 implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
   - "[[REQUIREMENT-PRINCIPLE__CARDINALITY_INTEGRITY__UNIQUE]]"
   - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---

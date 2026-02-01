@@ -1049,11 +1049,19 @@ async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
     uid = arguments.get("uid")
     if not uid: return [types.TextContent(type="text", text="Error: UID is required")]
     
+    # 0. IRON DOME SECURITY: System Types Protection
+    driver = get_driver()
+    type_check_query = "MATCH (n {uid: $uid}) RETURN labels(n) as labels"
+    type_recs, _, _ = driver.execute_query(type_check_query, {"uid": uid}, database_="neo4j")
+    
+    if type_recs and type_recs[0]['labels']:
+        labels = type_recs[0]['labels']
+        if any(lbl in ['Action', 'Constraint', 'NodeType'] for lbl in labels):
+            return [types.TextContent(type="text", text=f"⛔ IRON DOME SECURITY: Permission Denied. You cannot delete system node {uid} (Type: {labels}). These define the laws of physics.")]
+
     # Check if this is the Agent's current location
     if uid == get_agent_location():
         return [types.TextContent(type="text", text="❌ PHYSICS error: You cannot delete the node you are currently standing on.")]
-
-    driver = get_driver()
     
     # 1. Structural Integrity Check: Does this node have children (outgoing dependencies)?
     # We only care about semantic links like DECOMPOSES, IMPLEMENTS, DEPENDS_ON.
@@ -1070,13 +1078,19 @@ async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
     query = "MATCH (n {uid: $uid}) DETACH DELETE n RETURN count(n) as count"
     try:
         records, _, _ = driver.execute_query(query, {"uid": uid}, database_="neo4j")
-        if records[0]['count'] == 0:
-            return [types.TextContent(type="text", text=f"⚠️ Node {uid} not found in database.")]
+        db_deleted = records[0]['count'] > 0
         
-        # Sync: remove file
-        sync_tool.delete_node(uid)
+        # Always attempt to delete file (Clean up ghosts)
+        file_deleted = sync_tool.delete_node(uid)
         
-        return [types.TextContent(type="text", text=f"✅ Node {uid} has been PERMANENTLY DELETED.")]
+        if db_deleted and file_deleted:
+            return [types.TextContent(type="text", text=f"✅ Node {uid} and its file have been PERMANENTLY DELETED.")]
+        elif db_deleted:
+            return [types.TextContent(type="text", text=f"✅ Node {uid} deleted from DB (File was not found).")]
+        elif file_deleted:
+            return [types.TextContent(type="text", text=f"🧹 Ghost File for {uid} deleted (Node was not in DB).")]
+        else:
+             return [types.TextContent(type="text", text=f"⚠️ Node {uid} not found in database AND no file found on disk.")]
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error deleting node: {e}")]
 
@@ -1217,6 +1231,15 @@ async def tool_update_node(arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text="Error: 'uid' and 'properties' (dict) are required.")]
         
     # Security: Prevent overwriting critical system fields
+    driver = get_driver()
+    type_check_query = "MATCH (n {uid: $uid}) RETURN labels(n) as labels"
+    type_recs, _, _ = driver.execute_query(type_check_query, {"uid": uid}, database_="neo4j")
+    
+    if type_recs and type_recs[0]['labels']:
+        labels = type_recs[0]['labels']
+        if any(lbl in ['Action', 'Constraint', 'NodeType'] for lbl in labels):
+            return [types.TextContent(type="text", text=f"⛔ IRON DOME SECURITY: Permission Denied. You cannot modify system node {uid} (Type: {labels}). These define the laws of physics.")]
+
     forbidden_keys = ['uid', 'type', 'created_at', 'embedding', 'project_id']
     clean_props = {k: v for k, v in properties.items() if k not in forbidden_keys}
     
@@ -1849,34 +1872,14 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
     
     # 2. If content is empty, try to read from Markdown file
     if not content:
-        # Determine file path based on type
-        TYPE_TO_FOLDER = {
-            "Idea": "1_Ideas",
-            "Spec": "2_Specs",
-            "Domain": "3_Domains",
-            "Requirement": "4_Requirements",
-            "Task": "5_Tasks",
-            "Bug": "6_Bugs"
-        }
-        subfolder = TYPE_TO_FOLDER.get(node_type, "9_Unclassified")
-        filename = f"{uid}.md".replace("/", "_").replace("\\", "_")
-        file_path = os.path.join(WORKSPACE_ROOT, "Graph_Export", subfolder, filename)
+        # Use Centralized Logic
+        file_path = sync_tool.get_file_path(uid, node_type)
         
         if os.path.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    file_content = f.read()
-                
-                # Extract body (after frontmatter)
-                if file_content.startswith("---"):
-                    parts = file_content.split("---", 2)
-                    if len(parts) >= 3:
-                        content = parts[2].strip()
-                    else:
-                        content = file_content
-                else:
-                    content = file_content
-                    
+                # Use centralized parser
+                _, body = sync_tool.parse_markdown_file(file_path)
+                content = body or "(No content body in file)"
             except Exception as e:
                 content = f"(Error reading file: {e})"
         else:
@@ -1923,9 +1926,11 @@ async def tool_find_orphans(arguments: dict) -> list[types.TextContent]:
     
     # Query for orphans: Nodes with degree 0
     # We filter by project_id if present
+    # EXCLUDE pure Schema nodes (NodeType) from orphan search
     query = """
     MATCH (n)
     WHERE (n.project_id = $project_id OR n.project_id IS NULL)
+      AND NOT (n:NodeType)
       AND NOT (n)--()
     RETURN n.uid as uid, labels(n)[0] as type, n.title as title
     LIMIT $limit

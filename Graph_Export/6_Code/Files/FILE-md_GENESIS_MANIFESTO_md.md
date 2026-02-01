@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "GENESIS_MANIFESTO.md"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-YADRO_DOKUMENTATSII_PROEKTA]]"
 ---
 # GENESIS_MANIFESTO.md
 

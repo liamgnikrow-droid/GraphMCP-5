@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "package-lock.json"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # package-lock.json
 

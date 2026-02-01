@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "duplicated_description_files.txt"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # duplicated_description_files.txt
 

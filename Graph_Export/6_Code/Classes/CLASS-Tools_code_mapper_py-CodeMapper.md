@@ -9,10 +9,10 @@ status: "unknown"
 tags: [graph/class, state/unknown]
 cssclasses: [juggl-node, type-class, premium-card]
 decomposes:
-  - "[[FUNC-Tools_code_mapper_py-CodeMapper___init__]]"
-  - "[[FUNC-Tools_code_mapper_py-CodeMapper_generate_uid]]"
   - "[[FUNC-Tools_code_mapper_py-CodeMapper_process_python_file]]"
   - "[[FUNC-Tools_code_mapper_py-CodeMapper_scan]]"
+  - "[[FUNC-Tools_codebase_mapper_py-CodebaseMapper___init__]]"
+  - "[[FUNC-Tools_codebase_mapper_py-CodebaseMapper_generate_uid]]"
 ---
 # CodeMapper
 

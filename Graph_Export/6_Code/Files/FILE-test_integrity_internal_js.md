@@ -7,10 +7,6 @@ project_id: "graphmcp"
 name: "test_integrity_internal.js"
 tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
-decomposes:
-  - "[[FUNC-test_integrity_internal_js-callTool]]"
-  - "[[FUNC-test_integrity_internal_js-httpPost]]"
-  - "[[FUNC-test_integrity_internal_js-testTools]]"
 implements:
   - "[[REQUIREMENT-PRINCIPLE__CARDINALITY_INTEGRITY__UNIQUE]]"
   - "[[REQUIREMENT-PRINTSIP__KANONICHESKAYA_ONTOLOGIYA__PYA]]"

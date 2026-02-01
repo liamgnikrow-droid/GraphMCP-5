@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "migrate_hierarchical_links"
 tags: [graph/function, state/draft]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # migrate_hierarchical_links
 

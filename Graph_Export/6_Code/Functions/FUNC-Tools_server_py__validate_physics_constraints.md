@@ -8,9 +8,6 @@ last_mapped: "2026-01-29T13:21:33.964000000+00:00"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
-implements:
-  - "[[REQUIREMENT-PRINCIPLE__EXPLICIT_PERMISSIONS]]"
-  - "[[REQUIREMENT-PRINCIPLE__METAGRAPH_LAW]]"
 ---
 # validate_physics_constraints
 

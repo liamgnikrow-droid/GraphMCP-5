@@ -24,6 +24,11 @@ services:
       - vscode_state:/home/node/.vscode-server/data/Machine:rw
       - vscode-server-extensions:/home/node/.vscode-server/extensions:rw
 
+      # 3. IRON DOME SECURITY: MASKING
+      # Hide system scripts from the Agent. It will see an empty folder.
+      - /workspace/Tools
+
+
     # FIX PERMISSIONS
     command: /bin/sh -c "sudo chown -R node:node /workspace/.graphmcp /home/node/.antigravity /home/node/.gemini /home/node/.vscode-server && sleep infinity"
 

@@ -5,11 +5,10 @@ type: "File"
 path: "package-lock.json"
 project_id: "graphmcp"
 name: "package-lock.json"
-status: "unknown"
-tags: [graph/file, state/unknown]
+tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 ---
 # package-lock.json
 
 > [!abstract] File Context
-> **ID:** `FILE-package-lock_json` | **Status:** `unknown`
+> **ID:** `FILE-package-lock_json` | **Status:** `Draft`

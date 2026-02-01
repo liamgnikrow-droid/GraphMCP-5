@@ -8,6 +8,10 @@ name: "decompose_tools_specs.py"
 status: "unknown"
 tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
+decomposes:
+  - "[[FUNC-Tools_decompose_tools_specs_py-decompose]]"
+implements:
+  - "[[REQUIREMENT-SYSTEM__BOOTSTRAP___KERNEL_INITIALIZATIO]]"
 ---
 # decompose_tools_specs.py
 

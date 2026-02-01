@@ -9,6 +9,10 @@ last_mapped: "2026-01-29T13:21:33.111000000+00:00"
 status: "unknown"
 tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
+decomposes:
+  - "[[FUNC-Tools_diagnostic_py-check_graph]]"
+implements:
+  - "[[REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION]]"
 ---
 # diagnostic.py
 

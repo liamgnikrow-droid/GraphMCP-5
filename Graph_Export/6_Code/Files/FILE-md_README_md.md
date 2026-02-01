@@ -5,11 +5,10 @@ type: "File"
 path: "md/README.md"
 project_id: "graphmcp"
 name: "README.md"
-status: "unknown"
-tags: [graph/file, state/unknown]
+tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
 ---
 # README.md
 
 > [!abstract] File Context
-> **ID:** `FILE-md_README_md` | **Status:** `unknown`
+> **ID:** `FILE-md_README_md` | **Status:** `Draft`

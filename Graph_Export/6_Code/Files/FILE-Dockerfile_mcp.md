@@ -8,6 +8,9 @@ name: "Dockerfile.mcp"
 status: "unknown"
 tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-SYSTEM__BOOTSTRAP___KERNEL_INITIALIZATIO]]"
+  - "[[REQUIREMENT-SYSTEM__MULTI_DATABASE_ISOLATION]]"
 ---
 # Dockerfile.mcp
 

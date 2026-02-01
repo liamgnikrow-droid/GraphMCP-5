@@ -729,6 +729,52 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error creating concept: {e}")]
 
+async def tool_refresh_knowledge(arguments: dict) -> list[types.TextContent]:
+    """
+    Refreshes semantic embeddings for all nodes in the graph.
+    Useful after bulk imports or manual edits.
+    """
+    driver = get_driver()
+    if not driver: return [types.TextContent(type="text", text="Error: No Backend Connection")]
+    
+    # 1. Fetch all semantic nodes
+    query = """
+    MATCH (n)
+    WHERE (n:Idea OR n:Spec OR n:Requirement OR n:Task OR n:Domain)
+    RETURN n.uid as uid, n.title as title, n.description as description
+    """
+    try:
+        records, _, _ = driver.execute_query(query, database_="neo4j")
+        updated_count = 0
+        
+        print(f"🧠 Refreshing embeddings for {len(records)} nodes...", file=sys.stderr)
+        
+        with driver.session(database="neo4j") as session:
+            for rec in records:
+                uid = rec['uid']
+                title = rec.get('title', '') or ''
+                desc = rec.get('description', '') or ''
+                
+                # Re-calculate embedding
+                semantic_text = f"{title} {desc}"
+                embedding = emb_manager.get_embedding(semantic_text)
+                
+                if embedding:
+                    session.run(
+                        "MATCH (n {uid: $uid}) SET n.embedding = $emb",
+                        {"uid": uid, "emb": embedding}
+                    )
+                    updated_count += 1
+                    
+        return [types.TextContent(
+            type="text", 
+            text=f"✅ Knowledge Refreshed. Updated embeddings for {updated_count} nodes."
+        )]
+        
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error refreshing knowledge: {e}")]
+
+
 @mcp.list_tools()
 async def list_tools() -> list[types.Tool]:
     """Returns all available tools. Enforcement happens in call_tool."""
@@ -754,6 +800,21 @@ async def list_tools() -> list[types.Tool]:
                     "description": {"type": "string", "description": "Description in Russian"}
                 },
                 "required": ["type", "title"]
+            }
+        ),
+        types.Tool(
+            name="update_node",
+            description="Adds or updates metadata properties (like status, priority, spec_ref) to a node.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "uid": {"type": "string"},
+                    "properties": {
+                        "type": "object",
+                        "description": "Dictionary of key-value pairs to set. E.g. {'spec_ref': '1.2.3', 'status': 'Done'}"
+                    }
+                },
+                "required": ["uid", "properties"]
             }
         ),
         types.Tool(
@@ -914,6 +975,27 @@ async def list_tools() -> list[types.Tool]:
                 },
                 "required": ["query"]
             }
+
+        ),
+        types.Tool(
+            name="refresh_knowledge",
+            description="Recalculates semantic embeddings for ALL nodes. Use this if you suspect the graph is out of sync with manual file edits.",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        ),
+        types.Tool(
+            name="find_orphans",
+            description="Finds isolated nodes (orphans) that have NO relationships. Read-only diagnostics.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "Max number of orphans to return (default: 50)"}
+                },
+                "required": []
+            }
         )
     ]
 
@@ -951,6 +1033,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "link_nodes": return await tool_link_nodes(arguments)
     elif name == "delete_node": return await tool_delete_node(arguments)
     elif name == "delete_link": return await tool_delete_link(arguments)
+    elif name == "update_node": return await tool_update_node(arguments)
     elif name == "format_cypher": return await tool_format_cypher(arguments)
     elif name == "register_task": return await tool_register_task(arguments)
     elif name == "read_node": return await tool_read_node(arguments)
@@ -958,6 +1041,8 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     elif name == "set_workflow": return await tool_set_workflow(arguments)
     elif name == "map_codebase": return await tool_map_codebase(arguments)
     elif name == "illuminate_path": return await tool_illuminate_path(arguments)
+    elif name == "refresh_knowledge": return await tool_refresh_knowledge(arguments)
+    elif name == "find_orphans": return await tool_find_orphans(arguments)
     else: return [types.TextContent(type="text", text=f"Error: Unknown tool {name}")]
 
 async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
@@ -1002,16 +1087,20 @@ async def tool_delete_link(arguments: dict) -> list[types.TextContent]:
     
     driver = get_driver()
     
-    # 1. Structural Integrity Check: Is this the ONLY incoming link for the target?
-    # If we cut this, does the target become an island?
-    check_island_query = """
-    MATCH (t {uid: $target})<-[r]-(any_parent)
-    RETURN count(r) as incoming_count
-    """
-    check_recs, _, _ = driver.execute_query(check_island_query, {"target": target}, database_="neo4j")
+    # 1. Structural Integrity Check: Does removing this link isolate the node completely?
+    # NEW LOGIC (Network): Checks ANY remaining connection (Incoming OR Outgoing).
     
-    if check_recs and check_recs[0]['incoming_count'] <= 1:
-         return [types.TextContent(type="text", text=f"❌ PHYSICS ERROR (STRUCTURAL INTEGRITY): This link is the ONLY incoming connection for node '{target}'. Deleting it would create an Island. Create a new link to '{target}' first.")]
+    check_connectivity_query = """
+    MATCH (t {uid: $target})-[r]-(any)
+    RETURN count(r) as total_degree
+    """
+    check_recs, _, _ = driver.execute_query(check_connectivity_query, {"target": target}, database_="neo4j")
+    
+    current_degree = check_recs[0]['total_degree'] if check_recs else 0
+    
+    # If degree is 1 (or less), deleting the link makes it 0 -> Island.
+    if current_degree <= 1:
+          return [types.TextContent(type="text", text=f"❌ PHYSICS ERROR (STRUCTURAL INTEGRITY): Node '{target}' has only 1 connection. Deleting this link would leave it completely isolated (Island). Connect it to something else first.")]
 
     query = f"MATCH (s {{uid: $source}})-[r:{rel_type}]->(t {{uid: $target}}) DELETE r RETURN count(r) as count"
     try:
@@ -1040,25 +1129,123 @@ async def tool_link_nodes(arguments: dict) -> list[types.TextContent]:
     rel_type = arguments.get("rel_type")
     
     driver = get_driver()
-    query = f"""
-    MATCH (s {{uid: $source}}), (t {{uid: $target}})
-    MERGE (s)-[:{rel_type}]->(t)
-    RETURN s.uid, t.uid
+    
+    # 1. Fetch Types of Source and Target
+    type_query = """
+    MATCH (s {uid: $source})
+    OPTIONAL MATCH (t {uid: $target})
+    RETURN labels(s) as s_labels, labels(t) as t_labels
     """
     try:
-        records, _, _ = driver.execute_query(query, {"source": source, "target": target}, database_="neo4j")
-        if not records:
-            return [types.TextContent(type="text", text=f"❌ Error: One or both nodes ({source}, {target}) not found.")]
+        type_recs, _, _ = driver.execute_query(type_query, {"source": source, "target": target}, database_="neo4j")
+        
+        if not type_recs:
+             return [types.TextContent(type="text", text=f"❌ Error: Source node {source} not found.")]
+        
+        s_labels = type_recs[0]['s_labels']
+        t_labels = type_recs[0]['t_labels']
+        
+        if not s_labels: return [types.TextContent(type="text", text=f"❌ Error: Source node {source} not found.")]
+        if not t_labels: return [types.TextContent(type="text", text=f"❌ Error: Target node {target} not found.")]
+        
+        s_type = s_labels[0]
+        t_type = t_labels[0]
+        
+        # 2. SCHEMA VALIDATION (Query Meta-Graph)
+        # We query the Core DB ('neo4j') for implicit permission:
+        # (:NodeType {name: Source}) -[:ALLOWS_CONNECTION {type: RelType}]-> (:NodeType {name: Target})
+        
+        schema_query = """
+        MATCH (s:NodeType {name: $s_type})-[r:ALLOWS_CONNECTION {type: $rel_type}]->(t:NodeType {name: $t_type})
+        RETURN count(r) as is_allowed
+        """
+        
+        schema_recs, _, _ = driver.execute_query(
+            schema_query, 
+            {"s_type": s_type, "rel_type": rel_type, "t_type": t_type}, 
+            database_="neo4j"
+        )
+        
+        is_allowed = schema_recs[0]['is_allowed'] > 0
+        
+        if not is_allowed:
+            # Construct helpful hint by querying what IS allowed
+            hint_query = """
+            MATCH (s:NodeType {name: $s_type})-[r:ALLOWS_CONNECTION]->(t:NodeType)
+            RETURN r.type as rel, t.name as target
+            """
+            hint_recs, _, _ = driver.execute_query(hint_query, {"s_type": s_type}, database_="neo4j")
             
+            hints = [f"{h['rel']} -> {h['target']}" for h in hint_recs]
+            hint_msg = "\n".join([f"   • {h}" for h in hints[:5]]) or "   (No allowed connections found)"
+            
+            return [types.TextContent(
+                type="text", 
+                text=f"❌ PHYSICS ERROR: Connection Forbidden (Meta-Graph Schema).\n\n"
+                     f"Attempted: (:{s_type}) -[:{rel_type}]-> (:{t_type})\n"
+                     f"The Meta-Graph does not have an [:ALLOWS_CONNECTION] rule for this.\n\n"
+                     f"Allowed connections from {s_type}:\n{hint_msg}"
+            )]
+
+        
+        # 3. Execution
+        query = f"""
+        MATCH (s {{uid: $source}}), (t {{uid: $target}})
+        MERGE (s)-[:{rel_type}]->(t)
+        RETURN s.uid, t.uid
+        """
+        records, _, _ = driver.execute_query(query, {"source": source, "target": target}, database_="neo4j")
+        
         # Sync both nodes
         sync_tool.sync_node(source)
         sync_tool.sync_node(target)
         
         return [types.TextContent(type="text", text=f"✅ Linked {source} -[:{rel_type}]-> {target}.\nMarkdown files updated.")]
+        
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error linking nodes: {e}")]
 
+async def tool_update_node(arguments: dict) -> list[types.TextContent]:
+    """
+    Updates properties of an existing node.
+    Useful for detailed metadata like 'spec_ref', 'priority', 'status', etc.
+    """
+    uid = arguments.get("uid")
+    properties = arguments.get("properties")
+    
+    if not uid or not properties:
+        return [types.TextContent(type="text", text="Error: 'uid' and 'properties' (dict) are required.")]
+        
+    # Security: Prevent overwriting critical system fields
+    forbidden_keys = ['uid', 'type', 'created_at', 'embedding', 'project_id']
+    clean_props = {k: v for k, v in properties.items() if k not in forbidden_keys}
+    
+    if not clean_props:
+        return [types.TextContent(type="text", text=f"Error: No valid properties to update. Forbidden keys: {forbidden_keys}")]
+
+    driver = get_driver()
+    query = f"""
+    MATCH (n {{uid: $uid}})
+    SET n += $props
+    RETURN n.uid, n.title
+    """
+    
+    try:
+        records, _, _ = driver.execute_query(query, {"uid": uid, "props": clean_props}, database_="neo4j")
+        
+        if not records:
+            return [types.TextContent(type="text", text=f"⚠️ Node {uid} not found.")]
+            
+        # Sync to Markdown
+        file_path = sync_tool.sync_node(uid)
+        
+        return [types.TextContent(type="text", text=f"✅ Updated node {uid}.\nProperties set: {list(clean_props.keys())}\nSynced to: {file_path}")]
+        
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error updating node: {e}")]
+
 async def tool_register_task(arguments: dict) -> list[types.TextContent]:
+
     """
     Registers a new Task node from Human's chat message.
     Task nodes are NOT linked automatically — the agent decides where to connect them.
@@ -1415,10 +1602,22 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     
     loc_query = "MATCH (n {uid: $uid}) RETURN n.title as title, labels(n)[0] as type"
     loc_rec, _, _ = driver.execute_query(loc_query, {"uid": loc_uid}, database_="neo4j")
+    
+    
+    loc_title = ""
+    loc_type = ""
+    
     if loc_rec:
         loc_title = loc_rec[0].get("title", "N/A")
-        context_parts.append(f"   (:{current_node_type} {{uid: '{loc_uid}'}})")
+        loc_type = loc_rec[0].get("type", current_node_type)
+        context_parts.append(f"   (:{loc_type} {{uid: '{loc_uid}'}})")
         context_parts.append(f"   Title: {loc_title}\n")
+    else:
+        # STRICT MODE: Fail if node doesn't exist to prevent working with phantom data
+        return [types.TextContent(
+            type="text",
+            text=f"❌ PHYSICS ERROR (DATA CORRUPTION):\nCurrent location node '{loc_uid}' was NOT found in the Graph Database.\n\nACTION REQUIRED:\n1. Use 'sync_graph' to restore database from files.\n2. Or use 'move_to' to go to a known node (e.g. IDEA-Genesis)."
+        )]
     
     # === 2. NEIGHBORS ===
     neighbors_query = """
@@ -1522,7 +1721,7 @@ async def tool_get_full_context(arguments: dict) -> list[types.TextContent]:
     RETURN labels(n)[0] as type, count(n) as count
     ORDER BY count DESC
     """
-    stats_rec, _, _ = driver.execute_query(stats_query, database_="neo4j")
+    stats_rec, _, _ = driver.execute_query(stats_query, {"project_id": current_project}, database_="neo4j")
     
     if stats_rec:
         for s in stats_rec:
@@ -1709,6 +1908,43 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
         output_parts.append("```")
     
     return [types.TextContent(type="text", text="\n".join(output_parts))]
+
+
+
+async def tool_find_orphans(arguments: dict) -> list[types.TextContent]:
+    """
+    Finds isolated nodes (orphans) that have NO relationships to other nodes.
+    Useful for maintenance and graph health checks.
+    """
+    limit = arguments.get("limit", 50)
+    
+    driver = get_driver()
+    current_project = get_current_project_id()
+    
+    # Query for orphans: Nodes with degree 0
+    # We filter by project_id if present
+    query = """
+    MATCH (n)
+    WHERE (n.project_id = $project_id OR n.project_id IS NULL)
+      AND NOT (n)--()
+    RETURN n.uid as uid, labels(n)[0] as type, n.title as title
+    LIMIT $limit
+    """
+    
+    try:
+        records, _, _ = driver.execute_query(query, {"project_id": current_project, "limit": limit}, database_="neo4j")
+        
+        if not records:
+            return [types.TextContent(type="text", text="✅ No orphans found! The graph is fully connected (within the limit).")]
+            
+        output_lines = [f"Found {len(records)} orphan nodes (limit: {limit}):"]
+        for r in records:
+            output_lines.append(f"- [{r['type']}] {r['uid']}: {r.get('title', 'N/A')}")
+            
+        return [types.TextContent(type="text", text="\n".join(output_lines))]
+        
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"❌ Error finding orphans: {e}")]
 
 
 async def tool_illuminate_path(arguments: dict) -> list[types.TextContent]:

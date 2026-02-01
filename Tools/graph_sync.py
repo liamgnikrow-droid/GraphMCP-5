@@ -82,7 +82,7 @@ class GraphSync:
         # RELATED_TO is forbidden and ignored.
         query_rels = """
         MATCH (n {uid: $uid})-[r]-(other)
-        WHERE type(r) IN ['IMPLEMENTS', 'DECOMPOSES', 'DEPENDS_ON', 'CONFLICT', 'IMPORTS']
+        WHERE type(r) IN ['IMPLEMENTS', 'DECOMPOSES', 'DEPENDS_ON', 'CONFLICT', 'RELATES_TO', 'IMPORTS']
         RETURN
             startNode(r).uid as source,
             endNode(r).uid as target,
@@ -333,27 +333,36 @@ class GraphSync:
         if os.path.exists(file_path):
              existing_body = self.extract_body_from_markdown(file_path).strip()
         
-        # NORMALIZATION:
-        # Collapse multiple newlines to single newline for comparison purposes only
-        # This handles the case where DB has "A\n\nB" and file has "A\nB" or vice versa
-        def normalize(text):
-            return "\n".join([line.strip() for line in text.splitlines() if line.strip()])
-
-        db_norm = normalize(db_content)
-        file_norm = normalize(existing_body)
-
-        if db_content and existing_body and db_norm != file_norm:
-            # CONFLICT DETECTED
-            print(f"⚠️ Conflict details for {uid}:")
-            # print(f"DB len: {len(db_content)} vs File len: {len(existing_body)}")
-            # print(f"DB norm: {len(db_norm)} vs File norm: {len(file_norm)}")
-            
-            conflict_detected = True
-            node_data['props']['content'] = existing_body # Render with local content
-            
-        elif existing_body and not db_content:
-            # DB is empty, preserve file
-            node_data['props']['content'] = existing_body
+        # === CONTENT PRIORITY LOGIC ===
+        # For Idea and Spec, we TRUST THE DISK more than the DB for content.
+        # This prevents accidental overwrites when tools rebuild links but haven't synced content yet.
+        
+        if node_type in ['Idea', 'Spec'] and existing_body:
+             # Always use disk content.
+             # If DB differs, we silently update our internal state to match disk 
+             # before rendering, effectively "adopting" the disk content.
+             if db_content != existing_body:
+                 print(f"🔄 GraphSync: Adopting LOCAL content for {node_type} {uid} (Disk Priority).")
+                 node_data['props']['content'] = existing_body
+                 # Optional: Schedule a DB update? For now, we just don't overwrite the file with old DB data.
+        
+        else:
+            # Standard Logic for other types / conflict detection
+            def normalize(text):
+                return "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+    
+            db_norm = normalize(db_content)
+            file_norm = normalize(existing_body)
+    
+            if db_content and existing_body and db_norm != file_norm:
+                # CONFLICT DETECTED
+                print(f"⚠️ Conflict details for {uid}:")
+                conflict_detected = True
+                node_data['props']['content'] = existing_body # Safe Default: Keep local
+                
+            elif existing_body and not db_content:
+                # DB is empty, preserve file
+                node_data['props']['content'] = existing_body
         
         # Render
         content = self.render_markdown(node_data)

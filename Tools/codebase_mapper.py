@@ -202,7 +202,7 @@ class CodebaseMapper:
         WITH n, item
         MATCH (p {uid: item.parent})
         WHERE item.parent IS NOT NULL
-        MERGE (p)-[:CONTAINS]->(n)
+        MERGE (p)-[:DECOMPOSES]->(n)
         """
         
         # Simplified version without APOC (if not available)
@@ -231,7 +231,7 @@ class CodebaseMapper:
         WITH n, item
         MATCH (p {{uid: item.parent}})
         WHERE item.parent IS NOT NULL
-        MERGE (p)-[:CONTAINS]->(n)
+        MERGE (p)-[:DECOMPOSES]->(n)
         """
         
         # Clean dicts for transport

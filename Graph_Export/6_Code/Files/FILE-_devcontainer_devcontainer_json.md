@@ -5,11 +5,12 @@ type: "File"
 path: ".devcontainer/devcontainer.json"
 project_id: "graphmcp"
 name: "devcontainer.json"
-status: "unknown"
-tags: [graph/file, state/unknown]
+tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # devcontainer.json
 
 > [!abstract] File Context
-> **ID:** `FILE-_devcontainer_devcontainer_json` | **Status:** `unknown`
+> **ID:** `FILE-_devcontainer_devcontainer_json` | **Status:** `Draft`

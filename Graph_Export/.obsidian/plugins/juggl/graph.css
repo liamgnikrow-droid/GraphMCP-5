@@ -6,7 +6,7 @@ edge {
     target-arrow-color: #ccc;
     target-arrow-shape: triangle;
     width: 1;
-    curve-style: straight;
+    curve-style: bezier;
     opacity: 0.8;
 }
 
@@ -36,7 +36,7 @@ edge.implementation {
     target-arrow-color: #81C784;
     target-arrow-shape: triangle;
     width: 2;
-    curve-style: straight;
+    curve-style: bezier;
 }
 
 /* 2. DEPENDS_ON (Blue) */
@@ -52,7 +52,7 @@ edge.depends_on {
     target-arrow-color: #64B5F6;
     target-arrow-shape: triangle;
     width: 2;
-    curve-style: straight;
+    curve-style: bezier;
 }
 
 /* 3. DECOMPOSES (Orange/Yellow - Hierarchy) */
@@ -69,7 +69,7 @@ edge.decomposition {
     target-arrow-color: #FFB74D;
     target-arrow-shape: triangle;
     width: 2;
-    curve-style: straight;
+    curve-style: bezier;
 }
 
 /* 4. CONFLICT (Red) */
@@ -85,7 +85,7 @@ edge.conflict {
     target-arrow-color: #EF5350;
     target-arrow-shape: triangle;
     width: 2;
-    curve-style: straight;
+    curve-style: bezier;
 }
 
 /* 5. IMPORTS (Purple - Phase 3.1.4) */
@@ -98,7 +98,7 @@ edge.imports {
     target-arrow-shape: triangle;
     width: 1.5;
     line-style: dashed;
-    curve-style: straight;
+    curve-style: bezier;
 }
 
 /* NODES */
@@ -144,12 +144,28 @@ node.type-module {
     shape: ellipse;
 }
 
+/* Pain Points: Red */
+node.tag-PainPoints,
+node[type *="Pain Points"],
+node[label *="Pain Points"],
+node[id *="Pain Points"],
+node[tag="#PainPoints"] {
+    background-color: #EF5350;
+    border-color: #B71C1C;
+}
+
 /* Requirements: Orange-Yellow (Overrides Code if it overlaps) */
 node.tag-Requirements,
 node.tag-graph-requirement,
 node.type-requirement,
 node[type="Requirement"],
 node[type="Requirements"],
+node[uid *="REQ-"],
+node[uid *="REQ_"],
+node[id *="REQ-"],
+node[id *="REQ_"],
+node[label *="REQ-"],
+node[label *="REQ_"],
 node[tag="#Requirements"] {
     background-color: #FFA726;
     border-color: #EF6C00;
@@ -164,6 +180,10 @@ node.tag-graph-domain,
 node.type-domain,
 node[type="Domain"],
 node[type="Domain Entities"],
+node[uid *="DOMAIN-"],
+node[uid *="DOMAIN_"],
+node[id *="Domain"],
+node[label *="DOMAIN"],
 node[tag="#DomainEntities"] {
     background-color: #66BB6A;
     border-color: #2E7D32;
@@ -177,6 +197,9 @@ node.tag-graph-spec,
 node.type-spec,
 node[type="Spec"],
 node[type="Specification"],
+node[uid *="SPEC-"],
+node[uid *="SPEC_"],
+node[id *="SPEC-"],
 node[id *="SPEC_"] {
     background-color: #4DB6AC;
     border-color: #00796B;
@@ -185,10 +208,27 @@ node[id *="SPEC_"] {
     height: 15px;
 }
 
+/* SpecItems: Light Teal (Atomic parts) */
+node.tag-graph-specitem,
+node.type-specitem,
+node[type="SpecItem"],
+node[uid *="SPEC-ITEM-"],
+node[id *="SPEC-ITEM-"] {
+    background-color: #80CBC4;
+    border-color: #00897B;
+    shape: round-rectangle;
+    width: 15px;
+    height: 10px;
+    font-size: 8px;
+}
+
 /* Ideas: Light Amber (Vision) */
 node.tag-graph-idea,
 node.type-idea,
 node[type="Idea"],
+node[uid *="IDEA-"],
+node[uid *="IDEA_"],
+node[id *="IDEA-"],
 node[id *="IDEA_"] {
     background-color: #FF40FF;
     border-color: #000000;
@@ -202,6 +242,9 @@ node[id *="IDEA_"] {
 node.tag-graph-task,
 node.type-task,
 node[type="Task"],
+node[uid *="TASK-"],
+node[uid *="TASK_"],
+node[id *="TASK-"],
 node[id *="TASK_"] {
     background-color: #7986CB;
     border-color: #303F9F;
@@ -220,6 +263,26 @@ node[kind="goal"] {
     height: 30px;
     shape: hexagon;
     font-weight: bold;
+}
+
+/* Epic: Deep Gold - Phase 3.1.4+: High-level initiatives */
+node[type="Epic"],
+node.type-epic,
+node.tag-graph-epic,
+node[uid *="EPIC-"],
+node[uid *="EPIC_"],
+node[id *="EPIC-"],
+node[id *="EPIC_"],
+node[label *="EPIC-"],
+node[label *="EPIC_"] {
+    background-color: #FFA500;
+    border-color: #FF8C00;
+    border-width: 4px;
+    width: 35px;
+    height: 35px;
+    shape: hexagon;
+    font-weight: bold;
+    font-size: 14px;
 }
 
 /* Bug */

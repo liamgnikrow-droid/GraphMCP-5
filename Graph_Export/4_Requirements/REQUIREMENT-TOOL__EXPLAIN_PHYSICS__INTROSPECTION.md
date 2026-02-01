@@ -2,15 +2,11 @@
 uid: "REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION"
 title: "Tool: Explain Physics (Introspection)"
 type: "Requirement"
+spec_ref: "['3.1.4', '3.9']"
 project_id: "graphmcp"
 status: "Draft"
 tags: [graph/requirement, state/draft]
 cssclasses: [juggl-node, type-requirement, premium-card]
-implements:
-  - "[[SPEC-ITEM-3.1.4]]"
-  - "[[SPEC-ITEM-5.1.1]]"
-  - "[[SPEC-ITEM-5.1.2]]"
-  - "[[SPEC-ITEM-5.1.3]]"
 ---
 # Tool: Explain Physics (Introspection)
 
@@ -18,6 +14,8 @@ implements:
 > **ID:** `REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION` | **Status:** `Draft`
 
 ## Description
-Объясняет архитектурные причины доступности или блокировки инструментов в данной локации (Meta-Graph introspection).
-
-spec_ref: ["3.1.4", "5.1"]
+Интроспекция законов Мета-Графа (Introspection).
+Функциональные требования:
+- Объяснение причин недоступности инструмента.
+- Поиск связей [:CAN_PERFORM] и [:RESTRICTS] в Kernel Space.
+- Предложение пути к разблокировке действия.

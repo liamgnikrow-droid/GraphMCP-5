@@ -4,19 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "aff958e83401c892",
+        "id": "4350986729fcb9d6",
         "type": "tabs",
         "children": [
           {
-            "id": "5470f69a54a00e0e",
+            "id": "476224ec753648fe",
             "type": "leaf",
-            "pinned": true,
             "state": {
-              "type": "juggl_view",
-              "state": {},
-              "pinned": true,
+              "type": "markdown",
+              "state": {
+                "file": "2_Specs/SPEC-Graph_Physics.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Juggl"
+              "title": "SPEC-Graph_Physics"
             }
           }
         ]
@@ -76,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -155,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
-                "followCursor": false,
+                "file": "2_Specs/SPEC-Graph_Physics.md",
+                "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of SPEC-ITEM-1.3.1"
+              "title": "Outline of SPEC-Graph_Physics"
             }
           },
           {
@@ -204,34 +205,34 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "5470f69a54a00e0e",
+  "active": "476224ec753648fe",
   "lastOpenFiles": [
-    "2_Specs/SPEC-Graph_Physics.md",
-    "1_Ideas/IDEA-Genesis.md",
-    "2_Specs/Items/SPEC-ITEM-7.5.1.md",
-    "2_Specs/Items/SPEC-ITEM-1.3.1.md",
-    "2_Specs/Items/SPEC-ITEM-3.4.8.md",
-    "2_Specs/Items/SPEC-ITEM-3.4.7.md",
-    "2_Specs/Items/SPEC-ITEM-3.4.6.md",
-    "2_Specs/Items/SPEC-ITEM-3.4.5.md",
-    "2_Specs/Items/SPEC-ITEM-3.1.10.md",
-    "2_Specs/Items/SPEC-ITEM-3.1.9.md",
-    "2_Specs/Items/SPEC-ITEM-1.5.3.md",
-    "2_Specs/Items/SPEC-ITEM-1.5.2.md",
-    "2_Specs/Items/SPEC-ITEM-1.5.1.md",
-    "3_Tasks/BUG-Conflict-SPEC-Graph_Physics.md",
-    "4_Requirements/REQ-Tool_Move_To.md",
-    "3_Tasks/BUG-Conflict-SPEC-ITEM-3.2.5.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_MAP_CODEBASE__INTEGRATSIYA_KODA.md",
-    "3_Tasks/BUG-Conflict-REQ-Tool_Register_Task.md",
-    "3_Tasks/BUG-Conflict-REQ-Tool_Explain_Physics.md",
-    "3_Tasks/BUG-Conflict-SPEC-ITEM-7.5.3.md",
-    "3_Tasks/BUG-Conflict-SPEC-ITEM-7.5.4.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_SET_WORKFLOW__REZHIMY_RA_OTY.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_SWITCH_PROJECT__UPRAVLENIE_PROE.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_MOVE_TO__NAVIGATSIYA.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_TOOL_LOOK_AROUND__KONTEKSTNYY_DASH_O.md",
-    "3_Tasks/BUG-Conflict-REQUIREMENT-REQ_PRINCIPLE_METAGRAPH_LAW__META_GRAF__.md",
+    "4_Requirements/REQUIREMENT-INFRASTRUKTURA_PROEKTA.md",
+    "6_Code/Files/FILE-Tools_maintenance_intelligent_link_files_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_force_link_files_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_force_full_sync_py.md",
+    "6_Code/Files/FILE-Tools_bootstrap_schema_py.md",
+    "6_Code/Files/FILE-Переписка по созданию v_5_md.md",
+    "6_Code/Files/FILE-test_integrity_internal_js.md",
+    "6_Code/Files/FILE-mapping_inventory_json.md",
+    "6_Code/Files/FILE-duplicated_description_files_txt.md",
+    "6_Code/Files/FILE-cline_mcp_settings_json.md",
+    "6_Code/Files/FILE-auth_debug_log.md",
+    "6_Code/Files/FILE-ROADMAP_md.md",
+    "6_Code/Files/FILE-AGENT_INSTRUCTIONS_md.md",
+    "6_Code/Files/FILE-_gitignore.md",
+    "6_Code/Files/FILE-Tools_maintenance_finalize_cleanup_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_final_link_tools_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_final_fix_spec_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_export_mapping_inventory_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_enforce_physics_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_check_orphaned_files_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_check_islands_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_check_db_node_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_audit_file_links_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_apply_semantic_links_py.md",
+    "6_Code/Files/FILE-Tools_maintenance_aggressive_clean_py.md",
+    "6_Code/Files/FILE-Tools_hard_reset_duplicates_py.md",
     "2_Specs/Items",
     "9_Unclassified",
     "6_Code/Classes",

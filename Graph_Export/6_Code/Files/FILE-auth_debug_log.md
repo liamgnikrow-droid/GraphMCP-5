@@ -5,11 +5,12 @@ type: "File"
 path: "auth_debug.log"
 project_id: "graphmcp"
 name: "auth_debug.log"
-status: "unknown"
-tags: [graph/file, state/unknown]
+tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # auth_debug.log
 
 > [!abstract] File Context
-> **ID:** `FILE-auth_debug_log` | **Status:** `unknown`
+> **ID:** `FILE-auth_debug_log` | **Status:** `Draft`

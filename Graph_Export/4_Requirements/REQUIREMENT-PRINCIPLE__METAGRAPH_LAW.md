@@ -2,13 +2,11 @@
 uid: "REQUIREMENT-PRINCIPLE__METAGRAPH_LAW"
 title: "Principle: MetaGraph Law"
 type: "Requirement"
+spec_ref: "['1.4.3', '4.5.1']"
 project_id: "graphmcp"
 status: "Draft"
 tags: [graph/requirement, state/draft]
 cssclasses: [juggl-node, type-requirement, premium-card]
-implements:
-  - "[[FILE-Tools_server_py]]"
-  - "[[SPEC-ITEM-1.4.3]]"
 ---
 # Principle: MetaGraph Law
 

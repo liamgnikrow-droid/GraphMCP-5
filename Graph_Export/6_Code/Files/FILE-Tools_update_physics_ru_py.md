@@ -9,6 +9,8 @@ last_mapped: "2026-01-29T13:21:34.335000000+00:00"
 status: "unknown"
 tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-PRINCIPLE__LANGUAGE_INTEGRITY__RUSSIAN_P]]"
 ---
 # update_physics_ru.py
 

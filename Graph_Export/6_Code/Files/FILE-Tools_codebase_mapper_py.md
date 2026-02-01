@@ -8,8 +8,12 @@ name: "codebase_mapper.py"
 status: "unknown"
 tags: [graph/file, state/unknown]
 cssclasses: [juggl-node, type-file, premium-card]
+decomposes:
+  - "[[CLASS-Tools_codebase_mapper_py-CodeVisitor]]"
+  - "[[CLASS-Tools_codebase_mapper_py-CodebaseMapper]]"
+  - "[[FUNC-Tools_codebase_mapper_py-parse_python_enhanced]]"
 implements:
-  - "[[REQUIREMENT-REQ_TOOL_MAP_CODEBASE__INTEGRATSIYA_KODA]]"
+  - "[[REQUIREMENT-TOOL__MAP_CODEBASE__CODE_INTEGRATION]]"
 ---
 # codebase_mapper.py
 

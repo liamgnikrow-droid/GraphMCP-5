@@ -5,11 +5,12 @@ type: "File"
 path: "ROADMAP.md"
 project_id: "graphmcp"
 name: "ROADMAP.md"
-status: "unknown"
-tags: [graph/file, state/unknown]
+tags: [graph/file, state/draft]
 cssclasses: [juggl-node, type-file, premium-card]
+implements:
+  - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---
 # ROADMAP.md
 
 > [!abstract] File Context
-> **ID:** `FILE-ROADMAP_md` | **Status:** `unknown`
+> **ID:** `FILE-ROADMAP_md` | **Status:** `Draft`

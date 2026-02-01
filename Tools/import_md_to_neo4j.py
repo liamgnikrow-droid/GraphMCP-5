@@ -213,7 +213,7 @@ def import_md_files():
         # 5. Spec Atomizer (Parsing SPEC-Graph_Physics.md)
         atomized_count = 0
         spec_physics_file = GRAPH_EXPORT / "2_Specs" / "SPEC-Graph_Physics.md"
-        if spec_physics_file.exists():
+        if False: # DISABLED: SpecItem concept abolished in Canonical 5
             print(f"🔬 Atomizing {spec_physics_file.name}...")
             spec_content = spec_physics_file.read_text(encoding='utf-8')
             

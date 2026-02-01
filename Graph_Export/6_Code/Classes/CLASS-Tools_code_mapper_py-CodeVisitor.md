@@ -8,6 +8,10 @@ name: "CodeVisitor"
 status: "unknown"
 tags: [graph/class, state/unknown]
 cssclasses: [juggl-node, type-class, premium-card]
+decomposes:
+  - "[[FUNC-Tools_code_mapper_py-CodeVisitor___init__]]"
+  - "[[FUNC-Tools_code_mapper_py-CodeVisitor_visit_ClassDef]]"
+  - "[[FUNC-Tools_code_mapper_py-CodeVisitor_visit_FunctionDef]]"
 ---
 # CodeVisitor
 

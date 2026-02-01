@@ -1,0 +1,940 @@
+{
+  "requirements": [
+    {
+      "uid": "REQUIREMENT-AUTH_REQUIREMENT",
+      "title": "Auth Requirement",
+      "desc": "**Spec Ref:** `[2.4]`"
+    },
+    {
+      "uid": "REQUIREMENT-PERFORMANCE__CACHING___OPTIMIZATION",
+      "title": "Performance: Caching & Optimization",
+      "desc": "**Spec Ref:** `[7.1, 7.3]`"
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__CARDINALITY_INTEGRITY__UNIQUE",
+      "title": "Principle: Cardinality Integrity (Unique Core Nodes)",
+      "desc": "**Spec Ref:** `[4.3]`"
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__EXPLICIT_PERMISSIONS",
+      "title": "Principle: Explicit Permissions",
+      "desc": "\u0421\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u0411\u0435\u043b\u043e\u0433\u043e \u0421\u043f\u0438\u0441\u043a\u0430: \u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0422\u041e\u041b\u042c\u041a\u041e \u0442\u043e, \u0447\u0442\u043e \u044f\u0432\u043d\u043e \u043f\u0440\u043e\u043f\u0438\u0441\u0430\u043d\u043e \u0432 \u041c\u0435\u0442\u0430-\u0413\u0440\u0430\u0444\u0435. \u0415\u0441\u043b\u0438 \u0441\u0432\u044f\u0437\u0438 [:CAN_P"
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__LANGUAGE_INTEGRITY__RUSSIAN_P",
+      "title": "Principle: Language Integrity (Russian Priority)",
+      "desc": "**Spec Ref:** `[4.4]`"
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__METAGRAPH_LAW",
+      "title": "Principle: MetaGraph Law",
+      "desc": "\u041c\u0435\u0442\u0430-\u0413\u0440\u0430\u0444 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0438\u0441\u0447\u0435\u0440\u043f\u044b\u0432\u0430\u044e\u0449\u0438\u043c \u0437\u0430\u043a\u043e\u043d\u043e\u043c \u043f\u043e\u0432\u0435\u0434\u0435\u043d\u0438\u044f \u0410\u0433\u0435\u043d\u0442\u0430. \u0412\u0441\u0451, \u0447\u0442\u043e \u043d\u0435 \u043e\u043f\u0438\u0441\u0430\u043d\u043e \u0432 \u041c\u0435\u0442\u0430-\u0413\u0440\u0430\u0444\u0435, \u0434\u043b\u044f \u0410\u0433\u0435"
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__PURE_LINKS__NO_WIKI",
+      "title": "Principle: Pure Links (No Wiki)",
+      "desc": "\u041f\u0440\u0438\u043d\u0446\u0438\u043f\u0438\u0430\u043b\u044c\u043d\u044b\u0439 \u0437\u0430\u043f\u0440\u0435\u0442 \u043d\u0430 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435 \u0442\u0435\u043a\u0441\u0442\u043e\u0432\u044b\u0445 Wiki-\u0441\u0441\u044b\u043b\u043e\u043a \u0432 \u0434\u0432\u043e\u0439\u043d\u044b\u0445 \u043a\u0432\u0430\u0434\u0440\u0430\u0442\u043d\u044b\u0445 \u0441\u043a\u043e\u0431\u043a\u0430\u0445."
+    },
+    {
+      "uid": "REQUIREMENT-PRINCIPLE__TOPOLOGY_INTEGRITY__NO_ISLAND",
+      "title": "Principle: Topology Integrity (No Islands)",
+      "desc": "**Spec Ref:** `[4.2]`"
+    },
+    {
+      "uid": "REQUIREMENT-PRINTSIP__KANONICHESKAYA_ONTOLOGIYA__PYA",
+      "title": "\u041f\u0440\u0438\u043d\u0446\u0438\u043f: \u041a\u0430\u043d\u043e\u043d\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u041e\u043d\u0442\u043e\u043b\u043e\u0433\u0438\u044f (\u041f\u044f\u0442\u044c \u0422\u0438\u043f\u043e\u0432)",
+      "desc": "\u0421\u043e\u0431\u043b\u044e\u0434\u0435\u043d\u0438\u0435 \u041a\u0430\u043d\u043e\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u041f\u044f\u0442\u0435\u0440\u043a\u0438 \u0442\u0438\u043f\u043e\u0432 \u0441\u0432\u044f\u0437\u0435\u0439 \u0434\u043b\u044f \u043e\u0431\u0435\u0441\u043f\u0435\u0447\u0435\u043d\u0438\u044f \u0447\u0438\u0441\u0442\u043e\u0442\u044b \u0441\u0435\u043c\u0430\u043d\u0442\u0438\u043a\u0438 \u0433\u0440\u0430\u0444\u0430."
+    },
+    {
+      "uid": "REQUIREMENT-PRINTSIP__TSELOSTNOST_PROISHOZHDENIYA__P",
+      "title": "\u041f\u0440\u0438\u043d\u0446\u0438\u043f: \u0426\u0435\u043b\u043e\u0441\u0442\u043d\u043e\u0441\u0442\u044c \u041f\u0440\u043e\u0438\u0441\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u044f (Provenance)",
+      "desc": "\u0421\u043e\u0431\u043b\u044e\u0434\u0435\u043d\u0438\u0435 \u043f\u0440\u0430\u0432\u0438\u043b \u043f\u0440\u043e\u0438\u0441\u0445\u043e\u0436\u0434\u0435\u043d\u0438\u044f \u0441\u0432\u044f\u0437\u0435\u0439. \u041a\u0430\u0436\u0434\u0430\u044f \u0441\u0432\u044f\u0437\u044c \u0434\u043e\u043b\u0436\u043d\u0430 \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0442\u044c\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043d\u044b\u043c \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d"
+    },
+    {
+      "uid": "REQUIREMENT-SYSTEM__BOOTSTRAP___KERNEL_INITIALIZATIO",
+      "title": "System: Bootstrap & Kernel Initialization",
+      "desc": "**Spec Ref:** `[8.1]`"
+    },
+    {
+      "uid": "REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C",
+      "title": "System: Evolution Protocol (Meta-Graph Changes)",
+      "desc": "**Spec Ref:** `[6.3]`"
+    },
+    {
+      "uid": "REQUIREMENT-SYSTEM__MIDDLEWARE_INTELLIGENCE__LENS",
+      "title": "System: Middleware Intelligence (Lens)",
+      "desc": "**Spec Ref:** `[1.6, 4.5.3]`"
+    },
+    {
+      "uid": "REQUIREMENT-SYSTEM__MULTI_DATABASE_ISOLATION",
+      "title": "System: Multi-Database Isolation",
+      "desc": "**Spec Ref:** `[1.1.1]`"
+    },
+    {
+      "uid": "REQUIREMENT-SYSTEM__WORKFLOW_ENFORCEMENT__ROLE_BASED",
+      "title": "System: Workflow Enforcement (Role-Based Access)",
+      "desc": "**Spec Ref:** `[1.5]`"
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION",
+      "title": "Tool: Explain Physics (Introspection)",
+      "desc": "\u0418\u043d\u0442\u0440\u043e\u0441\u043f\u0435\u043a\u0446\u0438\u044f \u0437\u0430\u043a\u043e\u043d\u043e\u0432 \u041c\u0435\u0442\u0430-\u0413\u0440\u0430\u0444\u0430 (Introspection)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__GET_FULL_CONTEXT__AGGREGATOR",
+      "title": "Tool: Get Full Context (Aggregator)",
+      "desc": "\u0410\u0433\u0440\u0435\u0433\u0430\u0442\u043e\u0440 \u043f\u043e\u043b\u043d\u043e\u0433\u043e \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u0430 \u0434\u043b\u044f \u0437\u0430\u0434\u0430\u0447\u0438 (Context Aggregation)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__ILLUMINATE_PATH__VERTICAL_TRACE",
+      "title": "Tool: Illuminate Path (Vertical Trace)",
+      "desc": "\u041f\u043e\u0434\u0441\u0432\u0435\u0442\u043a\u0430 \u043b\u043e\u0433\u0438\u0447\u0435\u0441\u043a\u043e\u0433\u043e \u043f\u0443\u0442\u0438 \u0432 \u0433\u0440\u0430\u0444\u0435 (Traceability)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__LOOK_AROUND__DASHBOARD",
+      "title": "Tool: Look Around (Dashboard)",
+      "desc": "\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u0434\u043b\u044f \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u0430 \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0430\u0433\u0435\u043d\u0442\u0430 (Dashboard)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__LOOK_FOR_SIMILAR__SEMANTIC_SEARCH",
+      "title": "Tool: Look For Similar (Semantic Search)",
+      "desc": "\u0421\u0435\u043c\u0430\u043d\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0439 \u043f\u043e\u0438\u0441\u043a \u043f\u043e \u0433\u0440\u0430\u0444\u0443 (Semantic Search)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__MAP_CODEBASE__CODE_INTEGRATION",
+      "title": "Tool: Map Codebase (Code Integration)",
+      "desc": "\u0410\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0442\u0435\u0433\u0440\u0430\u0446\u0438\u044f \u043a\u043e\u0434\u043e\u0432\u043e\u0439 \u0431\u0430\u0437\u044b \u0432 \u0413\u0440\u0430\u0444 (Code mapping)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__MOVE_TO__NAVIGATION",
+      "title": "Tool: Move To (Navigation)",
+      "desc": "\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u043f\u0435\u0440\u0435\u043c\u0435\u0449\u0435\u043d\u0438\u044f \u0430\u0433\u0435\u043d\u0442\u0430 \u043f\u043e \u0433\u0440\u0430\u0444\u0443 (Navigation)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__READ_NODE__CONTENT_ACCESS",
+      "title": "Tool: Read Node (Content Access)",
+      "desc": "\u0427\u0442\u0435\u043d\u0438\u0435 \u043f\u043e\u043b\u043d\u043e\u0433\u043e \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c\u043e\u0433\u043e \u0443\u0437\u043b\u0430 (Content Access)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__REGISTER_TASK__ENTRY_POINT",
+      "title": "Tool: Register Task (Entry Point)",
+      "desc": "\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044f \u0437\u0430\u0434\u0430\u0447 \u043e\u0442 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f (Entry Point)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__SET_WORKFLOW__MODE_CONTROL",
+      "title": "Tool: Set Workflow (Mode Control)",
+      "desc": "\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0440\u0435\u0436\u0438\u043c\u0430\u043c\u0438 \u0444\u043e\u043a\u0443\u0441\u0438\u0440\u043e\u0432\u043a\u0438 \u0430\u0433\u0435\u043d\u0442\u0430 (Workflow Control)."
+    },
+    {
+      "uid": "REQUIREMENT-TOOL__SWITCH_PROJECT__CONTEXT_ISOLATION",
+      "title": "Tool: Switch Project (Context Isolation)",
+      "desc": "\u041f\u0435\u0440\u0435\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0435\u043a\u0442\u0430 (Context Isolation)."
+    }
+  ],
+  "code": [
+    {
+      "uid": "FUNC-Tools_bootstrap_metagraph_py-bootstrap_metagraph",
+      "name": "bootstrap_metagraph",
+      "path": "Tools/bootstrap_metagraph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_bootstrap_metagraph_py-check_metagraph_exists",
+      "name": "check_metagraph_exists",
+      "path": "Tools/bootstrap_metagraph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_bootstrap_metagraph_py-cleanup_metagraph",
+      "name": "cleanup_metagraph",
+      "path": "Tools/bootstrap_metagraph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_bootstrap_metagraph_py-main",
+      "name": "main",
+      "path": "Tools/bootstrap_metagraph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_bootstrap_metagraph_py-verify_metagraph",
+      "name": "verify_metagraph",
+      "path": "Tools/bootstrap_metagraph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "CLASS-Tools_code_mapper_py-CodeMapper",
+      "name": "CodeMapper",
+      "path": "Tools/code_mapper.py",
+      "type": "Class"
+    },
+    {
+      "uid": "CLASS-Tools_code_mapper_py-CodeVisitor",
+      "name": "CodeVisitor",
+      "path": "Tools/code_mapper.py",
+      "type": "Class"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeMapper___init__",
+      "name": "__init__",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeVisitor___init__",
+      "name": "__init__",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeMapper_generate_uid",
+      "name": "generate_uid",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeMapper_process_python_file",
+      "name": "process_python_file",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeMapper_scan",
+      "name": "scan",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeVisitor_visit_ClassDef",
+      "name": "visit_ClassDef",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_code_mapper_py-CodeVisitor_visit_FunctionDef",
+      "name": "visit_FunctionDef",
+      "path": "Tools/code_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "CLASS-Tools_codebase_mapper_py-CodeVisitor",
+      "name": "CodeVisitor",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Class"
+    },
+    {
+      "uid": "CLASS-Tools_codebase_mapper_py-CodebaseMapper",
+      "name": "CodebaseMapper",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Class"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper___init__",
+      "name": "__init__",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodeVisitor___init__",
+      "name": "__init__",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper__write_batch",
+      "name": "_write_batch",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper_batch_create_nodes",
+      "name": "batch_create_nodes",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper_generate_uid",
+      "name": "generate_uid",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper_parse_js_file",
+      "name": "parse_js_file",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-parse_python_enhanced",
+      "name": "parse_python_enhanced",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper_parse_python_file",
+      "name": "parse_python_file",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodebaseMapper_scan_and_map",
+      "name": "scan_and_map",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodeVisitor_visit_AsyncFunctionDef",
+      "name": "visit_AsyncFunctionDef",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodeVisitor_visit_ClassDef",
+      "name": "visit_ClassDef",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodeVisitor_visit_FunctionDef",
+      "name": "visit_FunctionDef",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_codebase_mapper_py-CodeVisitor_visit_Method",
+      "name": "visit_Method",
+      "path": "Tools/codebase_mapper.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-compare",
+      "name": "compare",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-cyrillic_ratio",
+      "name": "cyrillic_ratio",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-incoming_count",
+      "name": "incoming_count",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-node_count",
+      "name": "node_count",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-not_equals",
+      "name": "not_equals",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_constraint_primitives_py-regex_match",
+      "name": "regex_match",
+      "path": "Tools/constraint_primitives.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_db_config_py-close_driver",
+      "name": "close_driver",
+      "path": "Tools/db_config.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_db_config_py-get_driver",
+      "name": "get_driver",
+      "path": "Tools/db_config.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_debug_mcp_params_py-inspect_mcp_server",
+      "name": "inspect_mcp_server",
+      "path": "Tools/debug_mcp_params.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_debug_mcp_params_py-main",
+      "name": "main",
+      "path": "Tools/debug_mcp_params.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_debug_mcp_params_py-test_direct_call",
+      "name": "test_direct_call",
+      "path": "Tools/debug_mcp_params.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_debug_mcp_params_py-test_mcp_protocol",
+      "name": "test_mcp_protocol",
+      "path": "Tools/debug_mcp_params.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_decompose_tools_specs_py-decompose",
+      "name": "decompose",
+      "path": "Tools/decompose_tools_specs.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_diagnostic_py-check_graph",
+      "name": "check_graph",
+      "path": "Tools/diagnostic.py",
+      "type": "Function"
+    },
+    {
+      "uid": "CLASS-Tools_graph_sync_py-GraphSync",
+      "name": "GraphSync",
+      "path": "Tools/graph_sync.py",
+      "type": "Class"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync___init__",
+      "name": "__init__",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_close",
+      "name": "close",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_delete_node",
+      "name": "delete_node",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_extract_body_from_markdown",
+      "name": "extract_body_from_markdown",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_fetch_node",
+      "name": "fetch_node",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_get_driver",
+      "name": "get_driver",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_render_markdown",
+      "name": "render_markdown",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_sync_all",
+      "name": "sync_all",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_graph_sync_py-GraphSync_sync_node",
+      "name": "sync_node",
+      "path": "Tools/graph_sync.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_import_md_to_neo4j_py-import_md_files",
+      "name": "import_md_files",
+      "path": "Tools/import_md_to_neo4j.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_import_md_to_neo4j_py-parse_frontmatter",
+      "name": "parse_frontmatter",
+      "path": "Tools/import_md_to_neo4j.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_check_stats_py-check_stats",
+      "name": "check_stats",
+      "path": "Tools/maintenance/check_stats.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_consolidate_graph_py-consolidate_graph",
+      "name": "consolidate_graph",
+      "path": "Tools/maintenance/consolidate_graph.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_debug_ideas_py-check_ideas",
+      "name": "check_ideas",
+      "path": "Tools/maintenance/debug_ideas.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_deduplicate_genesis_py-deduplicate_genesis",
+      "name": "deduplicate_genesis",
+      "path": "Tools/maintenance/deduplicate_genesis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_fix_duplication_py-fix_all_nodes",
+      "name": "fix_all_nodes",
+      "path": "Tools/maintenance/fix_duplication.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_spec_coverage_py-extract_spec_items",
+      "name": "extract_spec_items",
+      "path": "Tools/maintenance/spec_coverage.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_maintenance_spec_coverage_py-get_coverage",
+      "name": "get_coverage",
+      "path": "Tools/maintenance/spec_coverage.py",
+      "type": "Function"
+    },
+    {
+      "uid": "CLASS-Tools_server_py-EmbeddingManager",
+      "name": "EmbeddingManager",
+      "path": "Tools/server.py",
+      "type": "Class"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-call_tool",
+      "name": "call_tool",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-check_constraints",
+      "name": "check_constraints",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_agent_location",
+      "name": "get_agent_location",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_allowed_tool_names",
+      "name": "get_allowed_tool_names",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_current_project_id",
+      "name": "get_current_project_id",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_current_project_root",
+      "name": "get_current_project_root",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_current_workflow",
+      "name": "get_current_workflow",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-EmbeddingManager_get_embedding",
+      "name": "get_embedding",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-EmbeddingManager_get_model",
+      "name": "get_model",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-get_node_type",
+      "name": "get_node_type",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-list_tools",
+      "name": "list_tools",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-load_project_state",
+      "name": "load_project_state",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-save_project_state",
+      "name": "save_project_state",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-set_current_project",
+      "name": "set_current_project",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-set_workflow_state",
+      "name": "set_workflow_state",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_create_concept",
+      "name": "tool_create_concept",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_delete_link",
+      "name": "tool_delete_link",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_delete_node",
+      "name": "tool_delete_node",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_explain_physics",
+      "name": "tool_explain_physics",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_format_cypher",
+      "name": "tool_format_cypher",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_get_full_context",
+      "name": "tool_get_full_context",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_illuminate_path",
+      "name": "tool_illuminate_path",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_link_nodes",
+      "name": "tool_link_nodes",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_look_around",
+      "name": "tool_look_around",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_look_for_similar",
+      "name": "tool_look_for_similar",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_map_codebase",
+      "name": "tool_map_codebase",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_move_to",
+      "name": "tool_move_to",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_read_node",
+      "name": "tool_read_node",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_register_task",
+      "name": "tool_register_task",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_set_workflow",
+      "name": "tool_set_workflow",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_switch_project",
+      "name": "tool_switch_project",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-tool_sync_graph",
+      "name": "tool_sync_graph",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_server_py-validate_physics_constraints",
+      "name": "validate_physics_constraints",
+      "path": "Tools/server.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_constraint_middleware_py-main",
+      "name": "main",
+      "path": "Tools/test_constraint_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_constraint_middleware_py-test_combined_constraints",
+      "name": "test_combined_constraints",
+      "path": "Tools/test_constraint_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_constraint_middleware_py-test_cyrillic_ratio",
+      "name": "test_cyrillic_ratio",
+      "path": "Tools/test_constraint_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_constraint_middleware_py-test_wikilinks",
+      "name": "test_wikilinks",
+      "path": "Tools/test_constraint_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_create_concept_with_middleware_py-main",
+      "name": "main",
+      "path": "Tools/test_create_concept_with_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_create_concept_with_middleware_py-test_allowed",
+      "name": "test_allowed",
+      "path": "Tools/test_create_concept_with_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_create_concept_with_middleware_py-test_blocked_by_russian",
+      "name": "test_blocked_by_russian",
+      "path": "Tools/test_create_concept_with_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_create_concept_with_middleware_py-test_blocked_by_wikilinks",
+      "name": "test_blocked_by_wikilinks",
+      "path": "Tools/test_create_concept_with_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-main",
+      "name": "main",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-set_agent_location",
+      "name": "set_agent_location",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-test_contextual_allowed",
+      "name": "test_contextual_allowed",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-test_contextual_blocked",
+      "name": "test_contextual_blocked",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-test_global_tool",
+      "name": "test_global_tool",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_explain_physics_py-test_nonexistent_tool",
+      "name": "test_nonexistent_tool",
+      "path": "Tools/test_explain_physics.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_format_cypher_py-main",
+      "name": "main",
+      "path": "Tools/test_format_cypher.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_format_cypher_py-test_custom_cypher",
+      "name": "test_custom_cypher",
+      "path": "Tools/test_format_cypher.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_format_cypher_py-test_format_action",
+      "name": "test_format_action",
+      "path": "Tools/test_format_cypher.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_format_cypher_py-test_format_node_type",
+      "name": "test_format_node_type",
+      "path": "Tools/test_format_cypher.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_get_full_context_py-main",
+      "name": "main",
+      "path": "Tools/test_get_full_context.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_get_full_context_py-test_auth_context",
+      "name": "test_auth_context",
+      "path": "Tools/test_get_full_context.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_get_full_context_py-test_english_query",
+      "name": "test_english_query",
+      "path": "Tools/test_get_full_context.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_get_full_context_py-test_graph_context",
+      "name": "test_graph_context",
+      "path": "Tools/test_get_full_context.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_impact_analysis_py-main",
+      "name": "main",
+      "path": "Tools/test_impact_analysis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_impact_analysis_py-set_agent_location",
+      "name": "set_agent_location",
+      "path": "Tools/test_impact_analysis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_impact_analysis_py-test_create_duplicate",
+      "name": "test_create_duplicate",
+      "path": "Tools/test_impact_analysis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_impact_analysis_py-test_create_requirement",
+      "name": "test_create_requirement",
+      "path": "Tools/test_impact_analysis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_impact_analysis_py-test_create_with_impact",
+      "name": "test_create_with_impact",
+      "path": "Tools/test_impact_analysis.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_map_codebase_live_py-test_live_mapping",
+      "name": "test_live_mapping",
+      "path": "Tools/test_map_codebase_live.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_middleware_py-main",
+      "name": "main",
+      "path": "Tools/test_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_middleware_py-test_contextual_tools",
+      "name": "test_contextual_tools",
+      "path": "Tools/test_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_middleware_py-test_global_tools",
+      "name": "test_global_tools",
+      "path": "Tools/test_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_middleware_py-test_spec_create_actions",
+      "name": "test_spec_create_actions",
+      "path": "Tools/test_middleware.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_register_task_py-main",
+      "name": "main",
+      "path": "Tools/test_register_task.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_register_task_py-test_register_task_english",
+      "name": "test_register_task_english",
+      "path": "Tools/test_register_task.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_register_task_py-test_register_task_no_description",
+      "name": "test_register_task_no_description",
+      "path": "Tools/test_register_task.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_register_task_py-test_register_task_valid",
+      "name": "test_register_task_valid",
+      "path": "Tools/test_register_task.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_register_task_py-test_register_task_wikilinks",
+      "name": "test_register_task_wikilinks",
+      "path": "Tools/test_register_task.py",
+      "type": "Function"
+    },
+    {
+      "uid": "FUNC-Tools_test_server_logic_py-test",
+      "name": "test",
+      "path": "Tools/test_server_logic.py",
+      "type": "Function"
+    }
+  ]
+}

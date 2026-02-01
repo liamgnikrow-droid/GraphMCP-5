@@ -42,6 +42,7 @@ CREATE (:Action {uid: 'ACT-register_task', tool_name: 'register_task', scope: 'g
 CREATE (:Action {uid: 'ACT-read_node', tool_name: 'read_node', scope: 'global'});
 CREATE (:Action {uid: 'ACT-get_full_context', tool_name: 'get_full_context', scope: 'global'});
 CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'global'});
+CREATE (:Action {uid: 'ACT-refresh_knowledge', tool_name: 'refresh_knowledge', scope: 'global', description: 'Recalculates semantic embeddings for ALL nodes. Useful after manual edits or imports.'});
 
 // ===== КОНТЕКСТНЫЕ ДЕЙСТВИЯ =====
 // Idea может создавать только Spec
@@ -60,6 +61,7 @@ CREATE (:Action {uid: 'ACT-delete_node', tool_name: 'delete_node', scope: 'conte
 CREATE (:Action {uid: 'ACT-delete_link', tool_name: 'delete_link', scope: 'contextual'});
 CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'contextual'});
 CREATE (:Action {uid: 'ACT-propose_change', tool_name: 'propose_change', scope: 'contextual'});
+CREATE (:Action {uid: 'ACT-update_node', tool_name: 'update_node', scope: 'contextual'});
 
 // ===== СВЯЗИ CAN_PERFORM =====
 // Idea может создавать Spec (если Spec ещё нет)
@@ -79,7 +81,7 @@ CREATE (nt)-[:CAN_PERFORM]->(a);
 // Все типы (кроме Domain) могут использовать общие действия
 MATCH (nt:NodeType) WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task']
 WITH nt
-MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change']
+MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change', 'ACT-update_node']
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== ОГРАНИЧЕНИЯ =====

@@ -1100,6 +1100,7 @@ def _propagate_implementation_links(driver, source_uid, target_uid):
     If a Child (Class/Function) implements a Requirement, 
     its Parent (File) must also implement it.
     """
+    print(f"DEBUG: Entering propagation for {source_uid} -> {target_uid}")
     query = """
     MATCH (child {uid: $source_uid})
     MATCH (child)-[:IMPLEMENTS]->(req {uid: $target_uid})
@@ -1115,6 +1116,8 @@ def _propagate_implementation_links(driver, source_uid, target_uid):
         records, _, _ = driver.execute_query(query, 
             {"source_uid": source_uid, "target_uid": target_uid}, 
             database_="neo4j")
+        
+        print(f"DEBUG: Propagation query result count: {len(records)}")
             
         for r in records:
             print(f"   ↳ Echo: {r['type']} {r['parent.uid']} also IMPLEMENTS {target_uid}", file=sys.stderr)
@@ -1124,66 +1127,7 @@ def _propagate_implementation_links(driver, source_uid, target_uid):
     except Exception as e:
         print(f"⚠️ Echo propagation failed: {e}", file=sys.stderr)
 
-async def tool_link_nodes(arguments: dict) -> list[types.TextContent]:
-    """
-    Creates a relationship between two existing nodes.
-    Validates against Meta-Graph allowed connections.
-    """
-    source_uid = arguments.get("source_uid")
-    target_uid = arguments.get("target_uid")
-    rel_type = arguments.get("rel_type")
-    
-    if not all([source_uid, target_uid, rel_type]):
-        return [types.TextContent(type="text", text="Error: source_uid, target_uid, and rel_type are required")]
 
-    driver = get_driver()
-    
-    # 1. Validate Schema via Meta-Graph
-    # We check if (SourceType)-[:ALLOWS_CONNECTION {type: rel_type}]->(TargetType) exists
-    
-    validation_query = """
-    MATCH (s {uid: $source_uid}), (t {uid: $target_uid})
-    WITH s, t, labels(s)[0] as s_type, labels(t)[0] as t_type
-    
-    MATCH (ns:NodeType {name: s_type})
-    MATCH (nt:NodeType {name: t_type})
-    MATCH (ns)-[r:ALLOWS_CONNECTION]->(nt)
-    WHERE r.type = $rel_type
-    RETURN s_type, t_type
-    """
-    
-    records, _, _ = driver.execute_query(validation_query, 
-        {"source_uid": source_uid, "target_uid": target_uid, "rel_type": rel_type}, 
-        database_="neo4j")
-        
-    if not records:
-        # Get types for better error message
-        type_query = "MATCH (s {uid: $s_uid}), (t {uid: $t_uid}) RETURN labels(s)[0] as st, labels(t)[0] as tt"
-        rec_types, _, _ = driver.execute_query(type_query, {"s_uid": source_uid, "t_uid": target_uid}, database_="neo4j")
-        if rec_types:
-            st, tt = rec_types[0]["st"], rec_types[0]["tt"]
-            return [types.TextContent(type="text", text=f"⛔ PHYSICS VIOLATION: Connection '{rel_type}' from {st} to {tt} is NOT allowed by Meta-Graph.")]
-        return [types.TextContent(type="text", text="Error: One or both nodes not found.")]
-
-    # 2. Create Relationship
-    query = f"""
-    MATCH (s {{uid: $source_uid}}), (t {{uid: $target_uid}})
-    MERGE (s)-[r:{rel_type}]->(t)
-    RETURN type(r)
-    """
-    
-    try:
-        driver.execute_query(query, 
-            {"source_uid": source_uid, "target_uid": target_uid}, 
-            database_="neo4j")
-            
-        # 3. Post-Hook: Implementation Echo
-        if rel_type == "IMPLEMENTS":
-            _propagate_implementation_links(driver, source_uid, target_uid)
-            
-        return [types.TextContent(type="text", text=f"✅ Link Created: ({source_uid})-[:{rel_type}]->({target_uid})")]
-    except Exception as e:
-        return [types.TextContent(type="text", text=f"Error creating link: {e}")]
 
 async def tool_sync_graph(arguments: dict) -> list[types.TextContent]:
     try:
@@ -1264,6 +1208,10 @@ async def tool_link_nodes(arguments: dict) -> list[types.TextContent]:
         RETURN s.uid, t.uid
         """
         records, _, _ = driver.execute_query(query, {"source": source, "target": target}, database_="neo4j")
+        
+        # 3. Post-Hook: Implementation Echo
+        if rel_type == "IMPLEMENTS":
+            _propagate_implementation_links(driver, source, target)
         
         # Sync both nodes
         sync_tool.sync_node(source)

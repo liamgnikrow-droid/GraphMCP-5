@@ -166,6 +166,13 @@ CREATE (c)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(r);
 MATCH (func:NodeType {name: 'Function'}), (r:NodeType {name: 'Requirement'})
 CREATE (func)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(r);
 
+// Code -> System (IMPLEMENTS) - "Мост в Реальность"
+MATCH (func:NodeType {name: 'Function'}), (act:NodeType {name: 'Action'})
+CREATE (func)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(act);
+
+MATCH (func:NodeType {name: 'Function'}), (con:NodeType {name: 'Constraint'})
+CREATE (func)-[:ALLOWS_CONNECTION {type: 'IMPLEMENTS'}]->(con);
+
 MATCH (c:Constraint {uid: 'CON-One_Spec'}), (a:Action {uid: 'ACT-create_spec'})
 CREATE (c)-[:RESTRICTS]->(a);
 """

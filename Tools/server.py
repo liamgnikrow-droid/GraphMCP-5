@@ -1094,41 +1094,96 @@ async def tool_delete_node(arguments: dict) -> list[types.TextContent]:
     except Exception as e:
         return [types.TextContent(type="text", text=f"❌ Error deleting node: {e}")]
 
-async def tool_delete_link(arguments: dict) -> list[types.TextContent]:
-    source = arguments.get("source_uid")
-    target = arguments.get("target_uid")
+def _propagate_implementation_links(driver, source_uid, target_uid):
+    """
+    Implementation Echo:
+    If a Child (Class/Function) implements a Requirement, 
+    its Parent (File) must also implement it.
+    """
+    query = """
+    MATCH (child {uid: $source_uid})
+    MATCH (child)-[:IMPLEMENTS]->(req {uid: $target_uid})
+    
+    // Find parent container (File or Class)
+    MATCH (parent)-[:DECOMPOSES]->(child)
+    
+    // Echo the link up
+    MERGE (parent)-[:IMPLEMENTS]->(req)
+    RETURN parent.uid, labels(parent)[0] as type
+    """
+    try:
+        records, _, _ = driver.execute_query(query, 
+            {"source_uid": source_uid, "target_uid": target_uid}, 
+            database_="neo4j")
+            
+        for r in records:
+            print(f"   ↳ Echo: {r['type']} {r['parent.uid']} also IMPLEMENTS {target_uid}", file=sys.stderr)
+            # Recursive propagation (if Class inside File)
+            _propagate_implementation_links(driver, r['parent.uid'], target_uid)
+            
+    except Exception as e:
+        print(f"⚠️ Echo propagation failed: {e}", file=sys.stderr)
+
+async def tool_link_nodes(arguments: dict) -> list[types.TextContent]:
+    """
+    Creates a relationship between two existing nodes.
+    Validates against Meta-Graph allowed connections.
+    """
+    source_uid = arguments.get("source_uid")
+    target_uid = arguments.get("target_uid")
     rel_type = arguments.get("rel_type")
     
+    if not all([source_uid, target_uid, rel_type]):
+        return [types.TextContent(type="text", text="Error: source_uid, target_uid, and rel_type are required")]
+
     driver = get_driver()
     
-    # 1. Structural Integrity Check: Does removing this link isolate the node completely?
-    # NEW LOGIC (Network): Checks ANY remaining connection (Incoming OR Outgoing).
+    # 1. Validate Schema via Meta-Graph
+    # We check if (SourceType)-[:ALLOWS_CONNECTION {type: rel_type}]->(TargetType) exists
     
-    check_connectivity_query = """
-    MATCH (t {uid: $target})-[r]-(any)
-    RETURN count(r) as total_degree
+    validation_query = """
+    MATCH (s {uid: $source_uid}), (t {uid: $target_uid})
+    WITH s, t, labels(s)[0] as s_type, labels(t)[0] as t_type
+    
+    MATCH (ns:NodeType {name: s_type})
+    MATCH (nt:NodeType {name: t_type})
+    MATCH (ns)-[r:ALLOWS_CONNECTION]->(nt)
+    WHERE r.type = $rel_type
+    RETURN s_type, t_type
     """
-    check_recs, _, _ = driver.execute_query(check_connectivity_query, {"target": target}, database_="neo4j")
     
-    current_degree = check_recs[0]['total_degree'] if check_recs else 0
-    
-    # If degree is 1 (or less), deleting the link makes it 0 -> Island.
-    if current_degree <= 1:
-          return [types.TextContent(type="text", text=f"❌ PHYSICS ERROR (STRUCTURAL INTEGRITY): Node '{target}' has only 1 connection. Deleting this link would leave it completely isolated (Island). Connect it to something else first.")]
+    records, _, _ = driver.execute_query(validation_query, 
+        {"source_uid": source_uid, "target_uid": target_uid, "rel_type": rel_type}, 
+        database_="neo4j")
+        
+    if not records:
+        # Get types for better error message
+        type_query = "MATCH (s {uid: $s_uid}), (t {uid: $t_uid}) RETURN labels(s)[0] as st, labels(t)[0] as tt"
+        rec_types, _, _ = driver.execute_query(type_query, {"s_uid": source_uid, "t_uid": target_uid}, database_="neo4j")
+        if rec_types:
+            st, tt = rec_types[0]["st"], rec_types[0]["tt"]
+            return [types.TextContent(type="text", text=f"⛔ PHYSICS VIOLATION: Connection '{rel_type}' from {st} to {tt} is NOT allowed by Meta-Graph.")]
+        return [types.TextContent(type="text", text="Error: One or both nodes not found.")]
 
-    query = f"MATCH (s {{uid: $source}})-[r:{rel_type}]->(t {{uid: $target}}) DELETE r RETURN count(r) as count"
+    # 2. Create Relationship
+    query = f"""
+    MATCH (s {{uid: $source_uid}}), (t {{uid: $target_uid}})
+    MERGE (s)-[r:{rel_type}]->(t)
+    RETURN type(r)
+    """
+    
     try:
-        records, _, _ = driver.execute_query(query, {"source": source, "target": target}, database_="neo4j")
-        if records[0]['count'] == 0:
-            return [types.TextContent(type="text", text="⚠️ Relationship not found.")]
-        
-        # Sync both nodes to update frontmatter
-        sync_tool.sync_node(source)
-        sync_tool.sync_node(target)
-        
-        return [types.TextContent(type="text", text=f"✅ Link {source} -[:{rel_type}]-> {target} deleted.")]
+        driver.execute_query(query, 
+            {"source_uid": source_uid, "target_uid": target_uid}, 
+            database_="neo4j")
+            
+        # 3. Post-Hook: Implementation Echo
+        if rel_type == "IMPLEMENTS":
+            _propagate_implementation_links(driver, source_uid, target_uid)
+            
+        return [types.TextContent(type="text", text=f"✅ Link Created: ({source_uid})-[:{rel_type}]->({target_uid})")]
     except Exception as e:
-        return [types.TextContent(type="text", text=f"❌ Error deleting link: {e}")]
+        return [types.TextContent(type="text", text=f"Error creating link: {e}")]
 
 async def tool_sync_graph(arguments: dict) -> list[types.TextContent]:
     try:
@@ -1916,36 +1971,78 @@ async def tool_read_node(arguments: dict) -> list[types.TextContent]:
 
 async def tool_find_orphans(arguments: dict) -> list[types.TextContent]:
     """
-    Finds isolated nodes (orphans) that have NO relationships to other nodes.
-    Useful for maintenance and graph health checks.
+    Finds isolated nodes (orphans) that have NO effective connection to the main graph hierarchy.
+    The "Main Graph" is defined as the set of nodes reachable from the 'IDEA-Genesis' root.
+    
+    This finds:
+    1. Absolute orphans (0 connections)
+    2. "Micro-islands" (Nodes connected to each other but isolated from the main tree)
     """
     limit = arguments.get("limit", 50)
-    
     driver = get_driver()
     current_project = get_current_project_id()
     
-    # Query for orphans: Nodes with degree 0
-    # We filter by project_id if present
-    # EXCLUDE pure Schema nodes (NodeType) from orphan search
-    query = """
-    MATCH (n)
-    WHERE (n.project_id = $project_id OR n.project_id IS NULL)
-      AND NOT (n:NodeType)
-      AND NOT (n)--()
-    RETURN n.uid as uid, labels(n)[0] as type, n.title as title
-    LIMIT $limit
-    """
+    output_lines = []
     
     try:
-        records, _, _ = driver.execute_query(query, {"project_id": current_project, "limit": limit}, database_="neo4j")
+        # 1. ABSOLUTE ORPHANS (Degree 0)
+        query_absolute = """
+        MATCH (n)
+        WHERE (n.project_id = $project_id OR n.project_id IS NULL)
+          AND NOT (n:NodeType)
+          AND NOT (n)--()
+        RETURN n.uid as uid, labels(n)[0] as type, n.title as title
+        LIMIT $limit
+        """
         
-        if not records:
-            return [types.TextContent(type="text", text="✅ No orphans found! The graph is fully connected (within the limit).")]
+        abs_records, _, _ = driver.execute_query(query_absolute, 
+            {"project_id": current_project, "limit": limit}, 
+            database_="neo4j")
             
-        output_lines = [f"Found {len(records)} orphan nodes (limit: {limit}):"]
-        for r in records:
-            output_lines.append(f"- [{r['type']}] {r['uid']}: {r.get('title', 'N/A')}")
+        if abs_records:
+             output_lines.append(f"Found {len(abs_records)} absolute orphans (0 links):")
+             for r in abs_records:
+                 output_lines.append(f"- [{r['type']}] {r['uid']}: {r.get('title', 'N/A')}")
+        
+        # Determine how many more we need
+        remaining_limit = limit - len(abs_records)
+        
+        if remaining_limit > 0:
+            # 2. ISLAND DETECTION (Connectivity check to IDEA-Genesis)
+            # Find nodes that have relationships but are NOT connected to IDEA-Genesis
             
+            island_query = """
+            MATCH (root:Idea {uid: 'IDEA-Genesis'})
+            // Get all nodes in the Main Component
+            CALL apoc.path.subgraphNodes(root, {}) YIELD node as connected_node
+            WITH collect(connected_node) as main_component_nodes
+            
+            MATCH (n)
+            WHERE (n.project_id = $project_id OR n.project_id IS NULL)
+              AND NOT (n:NodeType)
+              AND NOT n IN main_component_nodes
+              AND (n)--() // Only consider nodes that HAVE links (absolute orphans already found)
+              
+            RETURN n.uid as uid, labels(n)[0] as type, n.title as title
+            LIMIT $limit
+            """
+            
+            try:
+                island_records, _, _ = driver.execute_query(island_query, 
+                    {"project_id": current_project, "limit": remaining_limit}, 
+                    database_="neo4j")
+                    
+                if island_records:
+                    if output_lines: output_lines.append("") # Spacer
+                    output_lines.append(f"Found {len(island_records)} island nodes (isolated groups):")
+                    for r in island_records:
+                        output_lines.append(f"- [{r['type']}] {r['uid']}: {r.get('title', 'N/A')}")
+            except Exception as e:
+                output_lines.append(f"\n⚠️ Warning: Island detection failed (possibly APOC missing): {e}")
+
+        if not output_lines:
+             return [types.TextContent(type="text", text="✅ No orphans or islands found! The graph is fully connected (to 'IDEA-Genesis').")]
+             
         return [types.TextContent(type="text", text="\n".join(output_lines))]
         
     except Exception as e:

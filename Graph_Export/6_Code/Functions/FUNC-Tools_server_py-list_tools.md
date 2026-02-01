@@ -8,6 +8,8 @@ name: "list_tools"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-SYSTEM__MIDDLEWARE_INTELLIGENCE__LENS]]"
 ---
 # list_tools
 

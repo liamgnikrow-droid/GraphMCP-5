@@ -11,6 +11,8 @@ cssclasses: [juggl-node, type-class, premium-card]
 decomposes:
   - "[[FUNC-Tools_server_py-EmbeddingManager_get_embedding]]"
   - "[[FUNC-Tools_server_py-EmbeddingManager_get_model]]"
+implements:
+  - "[[REQUIREMENT-TOOL__LOOK_FOR_SIMILAR__SEMANTIC_SEARCH]]"
 ---
 # EmbeddingManager
 

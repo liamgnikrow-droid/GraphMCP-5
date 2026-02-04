@@ -183,6 +183,121 @@ def get_agent_location():
     # 2. Fallback: Agent might be lost or newborn. Default to Genesis.
     return "IDEA-Genesis"
 
+def check_action_permission(tool_name: str, arguments: dict) -> tuple[bool, str]:
+    """
+    PARAMETRIC VALIDATION (Iron Dome 2.0)
+    
+    Checks if the current agent location has permission to execute 
+    the given tool with the specific arguments provided.
+    
+    This function reads Action nodes from Meta-Graph and dynamically
+    validates argument constraints (constraint_arg_*).
+    
+    Args:
+        tool_name: Name of the tool being called (e.g., 'create_concept')
+        arguments: Dictionary of arguments passed to the tool
+        
+    Returns:
+        (allowed: bool, error_message: str)
+        - allowed: True if action is permitted with these arguments
+        - error_message: Empty if allowed, detailed error if blocked
+        
+    Example:
+        >>> check_action_permission('create_concept', {'type': 'Requirement'})
+        (False, "❌ PHYSICS ERROR: Cannot create Requirement from Idea...")
+    """
+    driver = get_driver()
+    if not driver:
+        return False, "Error: No Backend Connection"
+    
+    # Get current agent location and its type
+    current_uid = get_agent_location()
+    current_type = get_node_type(current_uid)
+    current_workflow = get_current_workflow()
+    
+    # Build dynamic WHERE clauses for argument matching
+    # Format: AND (act.constraint_arg_type IS NULL OR act.constraint_arg_type = $arg_type)
+    
+    # Extract critical arguments from the call
+    arg_type = arguments.get('type')  # For create_concept
+    arg_rel_type = arguments.get('rel_type')  # For link_nodes
+    
+    # Build Cypher query with dynamic parameter matching
+    query = """
+    MATCH (nt:NodeType {name: $node_type})-[:CAN_PERFORM]->(act:Action)
+    WHERE act.tool_name = $tool_name
+      AND act.scope = 'contextual'
+      // Dynamic parameter validation:
+      // If Action has constraint_arg_type, it MUST match the argument
+      AND (act.constraint_arg_type IS NULL OR act.constraint_arg_type = $arg_type)
+      // If Action has constraint_arg_rel_type, it MUST match the argument
+      AND (act.constraint_arg_rel_type IS NULL OR act.constraint_arg_rel_type = $arg_rel_type)
+      // If Action has constraint_arg_workflow, it MUST match current workflow
+      AND (act.constraint_arg_workflow IS NULL OR act.constraint_arg_workflow = $workflow)
+    RETURN count(act) > 0 as allowed, 
+           collect(act.uid) as matched_actions
+    """
+    
+    try:
+        records, _, _ = driver.execute_query(
+            query,
+            {
+                "node_type": current_type,
+                "tool_name": tool_name,
+                "arg_type": arg_type,
+                "arg_rel_type": arg_rel_type,
+                "workflow": current_workflow
+            },
+            database_="neo4j"
+        )
+        
+        if not records:
+            return False, f"❌ META-GRAPH ERROR: No permission data for tool '{tool_name}'"
+        
+        is_allowed = records[0]['allowed']
+        
+        if is_allowed:
+            # Логирование успешной проверки (debug level)
+            print(f"✅ ALLOWED: {tool_name} with args={arguments} from {current_type}", 
+                  file=sys.stderr)
+            return True, ""
+        else:
+            # Логирование блокировки для аудита
+            print(f"🚫 BLOCKED: {tool_name} with args={arguments} from {current_type} at {current_uid}", 
+                  file=sys.stderr)
+            
+            # Generate helpful error message
+            # Find what IS allowed to guide the agent
+            hint_query = """
+            MATCH (nt:NodeType {name: $node_type})-[:CAN_PERFORM]->(a:Action)
+            WHERE a.tool_name = $tool_name
+            RETURN a.constraint_arg_type as allowed_type, a.uid as action_uid
+            """
+            hint_recs, _, _ = driver.execute_query(
+                hint_query,
+                {"node_type": current_type, "tool_name": tool_name},
+                database_="neo4j"
+            )
+            
+            allowed_types = [h["allowed_type"] for h in hint_recs if h["allowed_type"]]
+            
+            error_msg = f"""❌ PHYSICS ERROR: Parametric Validation Failed
+
+📍 Location: (:{current_type} {{uid: '{current_uid}'}})
+🔧 Tool: {tool_name}
+📦 Arguments: {arguments}
+
+⛔ The Meta-Graph forbids this specific action with these parameters.
+✅ Allowed argument values from here: {allowed_types if allowed_types else 'None (tool not available with any parameters)'}
+
+💡 Use `explain_physics(tool_name='{tool_name}')` for detailed guidance."""
+            
+            return False, error_msg
+            
+    except Exception as e:
+        # Fail-safe: if validation fails, block the action
+        return False, f"❌ VALIDATION ERROR: Failed to check permissions: {e}"
+
 # --- TOOL IMPLEMENTATIONS ---
 async def tool_look_around(arguments: dict) -> list[types.TextContent]:
     """
@@ -282,7 +397,7 @@ async def tool_look_around(arguments: dict) -> list[types.TextContent]:
     # === 3. AVAILABLE ACTIONS (from Meta-Graph) ===
     actions_query = """
     MATCH (nt:NodeType {name: $node_type})-[:CAN_PERFORM]->(a:Action {scope: 'contextual'})
-    RETURN a.tool_name as tool, a.target_type as target
+    RETURN a.tool_name as tool, a.constraint_arg_type as target
     """
     actions_rec, _, _ = driver.execute_query(actions_query, {"node_type": loc_type}, database_="neo4j")
     
@@ -586,49 +701,8 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
     if c_type not in ["Spec", "Requirement", "Task", "Idea", "Domain"]:
          return [types.TextContent(type="text", text=f"Error: Invalid concept type '{c_type}'. Epic is DEAD.")]
 
-    # 2.1 META-GRAPH VALIDATION (Critical Fix)
-    # Middleware only checks if 'create_concept' tool is allowed.
-    # We must also check if the SPECIFIC target_type is allowed from the current parent node.
-    parent_uid = get_agent_location()
-    parent_type = get_node_type(parent_uid)
-    
-    # Exception for Genesis: Can always create allowed roots if logic permits, but let's stick to graph rules if possible.
-    # Assuming 'Idea' creation is handled properly by constraints. 
-    # Let's validate strictly.
-    
-    driver = get_driver()
-    
-    meta_validation_query = """
-    MATCH (nt:NodeType {name: $parent_type})-[:CAN_PERFORM]->(a:Action {tool_name: 'create_concept'})
-    WHERE a.target_type = $target_type
-    RETURN count(a) as allowed
-    """
-    
-    val_recs, _, _ = driver.execute_query(
-        meta_validation_query, 
-        {"parent_type": parent_type, "target_type": c_type}, 
-        database_="neo4j"
-    )
-    
-    is_target_allowed = val_recs and val_recs[0]['allowed'] > 0
-    
-    if not is_target_allowed:
-        # Find what IS allowed to help the user
-        hint_query = """
-        MATCH (nt:NodeType {name: $parent_type})-[:CAN_PERFORM]->(a:Action {tool_name: 'create_concept'})
-        RETURN a.target_type as allowed_type
-        """
-        hint_recs, _, _ = driver.execute_query(hint_query, {"parent_type": parent_type}, database_="neo4j")
-        allowed_types = [h["allowed_type"] for h in hint_recs if h["allowed_type"]]
-        
-        return [types.TextContent(
-             type="text", 
-             text=f"❌ PHYSICS ERROR: Hierarchy Violation.\n\n"
-                  f"Location: (:{parent_type} {{uid: '{parent_uid}'}})\n"
-                  f"Action: Create (:{c_type})\n\n"
-                  f"⛔ The Meta-Graph forbids creating a '{c_type}' directly from a '{parent_type}'.\n"
-                  f"✅ Allowed children types from here: {allowed_types}"
-        )]
+    # NOTE: Meta-Graph validation for target_type is now handled by middleware
+    # via check_action_permission() in call_tool(). No need to duplicate here.
 
     driver = get_driver()
     current_project = get_current_project_id()
@@ -1055,15 +1129,14 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
              text=f"❌ PHYSICS ERROR: Tool '{name}' is FORBIDDEN when you are at a node of type '{current_node_type}'.\nLocation: {loc_uid}"
          )]
          
-    # --- WORKFLOW CHECK ---
-    current_workflow = get_current_workflow()
-    MUTATION_TOOLS = ["create_concept", "link_nodes", "delete_node", "delete_link", "register_task", "sync_graph"]
+    # --- PARAMETRIC VALIDATION (Iron Dome 2.0) ---
+    # For tools that take parameters affecting permissions, check argument constraints
+    PARAMETRIC_TOOLS = ["create_concept", "link_nodes", "delete_node"]
     
-    if current_workflow == "Auditor" and name in MUTATION_TOOLS:
-        return [types.TextContent(
-             type="text",
-             text=f"⛔ WORKFLOW RESTRICTION: Tool '{name}' is BLOCKED in 'Auditor' mode.\nTip: Use set_workflow('Builder') or set_workflow('Architect') to enable modifications."
-        )]
+    if name in PARAMETRIC_TOOLS:
+        allowed, error_msg = check_action_permission(name, arguments)
+        if not allowed:
+            return [types.TextContent(type="text", text=error_msg)]
 
     # --- DISPATCH ---
     if name == "look_around": return await tool_look_around(arguments)

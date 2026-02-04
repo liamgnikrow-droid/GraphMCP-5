@@ -56,14 +56,14 @@ CREATE (:Action {uid: 'ACT-illuminate_path', tool_name: 'illuminate_path', scope
 
 // ===== КОНТЕКСТНЫЕ ДЕЙСТВИЯ =====
 // Idea может создавать только Spec
-CREATE (:Action {uid: 'ACT-create_spec', tool_name: 'create_concept', target_type: 'Spec', link_type: 'DECOMPOSES', scope: 'contextual'});
+CREATE (:Action {uid: 'ACT-create_spec', tool_name: 'create_concept', constraint_arg_type: 'Spec', link_type: 'DECOMPOSES', scope: 'contextual'});
 
 // Spec может создавать Requirement и Domain
-CREATE (:Action {uid: 'ACT-create_req', tool_name: 'create_concept', target_type: 'Requirement', link_type: 'DECOMPOSES', scope: 'contextual'});
-CREATE (:Action {uid: 'ACT-create_domain_from_spec', tool_name: 'create_concept', target_type: 'Domain', link_type: 'RELATES_TO', scope: 'contextual'});
+CREATE (:Action {uid: 'ACT-create_req', tool_name: 'create_concept', constraint_arg_type: 'Requirement', link_type: 'DECOMPOSES', scope: 'contextual'});
+CREATE (:Action {uid: 'ACT-create_domain_from_spec', tool_name: 'create_concept', constraint_arg_type: 'Domain', link_type: 'RELATES_TO', scope: 'contextual'});
 
 // Requirement может создавать Domain
-CREATE (:Action {uid: 'ACT-create_domain_from_req', tool_name: 'create_concept', target_type: 'Domain', link_type: 'RELATES_TO', scope: 'contextual'});
+CREATE (:Action {uid: 'ACT-create_domain_from_req', tool_name: 'create_concept', constraint_arg_type: 'Domain', link_type: 'RELATES_TO', scope: 'contextual'});
 
 // Общие контекстные действия
 CREATE (:Action {uid: 'ACT-link_nodes', tool_name: 'link_nodes', scope: 'contextual'});
@@ -72,6 +72,39 @@ CREATE (:Action {uid: 'ACT-delete_link', tool_name: 'delete_link', scope: 'conte
 CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'contextual'});
 CREATE (:Action {uid: 'ACT-propose_change', tool_name: 'propose_change', scope: 'contextual'});
 CREATE (:Action {uid: 'ACT-update_node', tool_name: 'update_node', scope: 'contextual'});
+
+// ===== PARAMETRIC ACTIONS (Iron Dome 2.0) =====
+// link_nodes: File может создавать IMPLEMENTS связи
+CREATE (:Action {
+    uid: 'ACT-link_implements',
+    tool_name: 'link_nodes',
+    constraint_arg_rel_type: 'IMPLEMENTS',
+    scope: 'contextual'
+});
+
+// link_nodes: Все типы могут создавать DECOMPOSES
+CREATE (:Action {
+    uid: 'ACT-link_decomposes',
+    tool_name: 'link_nodes',
+    constraint_arg_rel_type: 'DECOMPOSES',
+    scope: 'contextual'
+});
+
+// link_nodes: Spec/Requirement могут создавать SATISFIES
+CREATE (:Action {
+    uid: 'ACT-link_satisfies',
+    tool_name: 'link_nodes',
+    constraint_arg_rel_type: 'SATISFIES',
+    scope: 'contextual'
+});
+
+// delete_node: Удаление разрешено только в Builder режиме
+CREATE (:Action {
+    uid: 'ACT-delete_builder',
+    tool_name: 'delete_node',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
 
 // ===== СВЯЗИ CAN_PERFORM =====
 // Idea может создавать Spec (если Spec ещё нет)
@@ -92,6 +125,40 @@ CREATE (nt)-[:CAN_PERFORM]->(a);
 MATCH (nt:NodeType) WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
 WITH nt
 MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change', 'ACT-update_node', 'ACT-find_orphans', 'ACT-map_codebase', 'ACT-illuminate_path']
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// ===== PARAMETRIC CAN_PERFORM (Iron Dome 2.0) =====
+// File может создавать IMPLEMENTS связи
+MATCH (nt:NodeType {name: 'File'}), (a:Action {uid: 'ACT-link_implements'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// Function может создавать IMPLEMENTS связи
+MATCH (nt:NodeType {name: 'Function'}), (a:Action {uid: 'ACT-link_implements'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// Class может создавать IMPLEMENTS связи
+MATCH (nt:NodeType {name: 'Class'}), (a:Action {uid: 'ACT-link_implements'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// Все архитектурные типы могут создавать DECOMPOSES
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action {uid: 'ACT-link_decomposes'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// Spec и Requirement могут создавать SATISFIES
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Spec', 'Requirement']
+WITH nt
+MATCH (a:Action {uid: 'ACT-link_satisfies'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// Все типы могут удалять узлы в Builder режиме
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action {uid: 'ACT-delete_builder'})
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== ОГРАНИЧЕНИЯ =====

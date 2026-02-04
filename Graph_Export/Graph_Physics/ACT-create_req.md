@@ -5,7 +5,7 @@ type: "Action"
 link_type: "DECOMPOSES"
 tool_name: "create_concept"
 scope: "contextual"
-target_type: "Requirement"
+constraint_arg_type: "Requirement"
 tags: [graph/action, state/draft]
 cssclasses: [juggl-node, type-action, premium-card]
 ---

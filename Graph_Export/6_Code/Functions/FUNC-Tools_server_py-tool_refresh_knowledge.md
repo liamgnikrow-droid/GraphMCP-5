@@ -8,7 +8,6 @@ name: "tool_refresh_knowledge"
 tags: [graph/function, state/draft]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-refresh_knowledge]]"
   - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
   - "[[REQUIREMENT-TOOL__LOOK_FOR_SIMILAR__SEMANTIC_SEARCH]]"
 ---

@@ -9,8 +9,6 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-sync_graph]]"
-  - "[[ACT-sync_graph]]"
   - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # tool_sync_graph

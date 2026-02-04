@@ -9,7 +9,6 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-explain_physics]]"
   - "[[REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION]]"
 ---
 # tool_explain_physics

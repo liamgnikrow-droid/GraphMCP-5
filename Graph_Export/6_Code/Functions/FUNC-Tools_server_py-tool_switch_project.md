@@ -9,7 +9,6 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-switch_project]]"
   - "[[REQUIREMENT-TOOL__SWITCH_PROJECT__CONTEXT_ISOLATION]]"
 ---
 # tool_switch_project

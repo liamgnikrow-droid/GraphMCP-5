@@ -9,7 +9,6 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-set_workflow]]"
   - "[[REQUIREMENT-TOOL__SET_WORKFLOW__MODE_CONTROL]]"
 ---
 # tool_set_workflow

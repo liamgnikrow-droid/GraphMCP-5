@@ -9,7 +9,6 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
-  - "[[ACT-map_codebase]]"
   - "[[REQUIREMENT-TOOL__MAP_CODEBASE__CODE_INTEGRATION]]"
 ---
 # tool_map_codebase

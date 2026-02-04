@@ -7,8 +7,6 @@ project_id: "graphmcp"
 name: "tool_find_orphans"
 tags: [graph/function, state/draft]
 cssclasses: [juggl-node, type-function, premium-card]
-implements:
-  - "[[ACT-find_orphans]]"
 ---
 # tool_find_orphans
 

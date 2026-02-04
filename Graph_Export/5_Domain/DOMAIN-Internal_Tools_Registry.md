@@ -4,16 +4,15 @@ title: "Реестр внутренних утилит (Shadow Scripts)"
 type: "Domain"
 project_id: "graphmcp"
 status: "Active"
-tags: [domain/knowledge, internal, tools, maintenance]
-cssclasses: [premium-card, type-domain]
+tags: [graph/domain, state/active]
+cssclasses: [juggl-node, type-domain, premium-card]
 ---
-
 # Реестр внутренних утилит (Shadow Scripts)
 
 > [!abstract] Domain Context
 > **ID:** `DOMAIN-Internal_Tools_Registry` | **Status:** `Active`
-> Этот документ описывает служебные скрипты проекта GraphMCP-5, которые находятся вне зоны видимости AI-агента (не являются MCP Tools). Они предназначены для администратора (Human) или "Суперпользователя" для задач обслуживания, развертывания и диагностики.
 
+## Description
 ## 1. Введение
 
 В архитектуре **Iron Dome** существует четкое разделение инструментов:

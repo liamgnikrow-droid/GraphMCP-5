@@ -5,7 +5,7 @@ type: "Action"
 link_type: "RELATES_TO"
 tool_name: "create_concept"
 scope: "contextual"
-target_type: "Domain"
+constraint_arg_type: "Domain"
 tags: [graph/action, state/draft]
 cssclasses: [juggl-node, type-action, premium-card]
 ---

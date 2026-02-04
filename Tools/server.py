@@ -979,7 +979,7 @@ async def list_tools() -> list[types.Tool]:
                 "properties": {
                     "source_uid": {"type": "string"},
                     "target_uid": {"type": "string"},
-                    "rel_type": {"type": "string", "enum": ["IMPLEMENTS", "DECOMPOSES", "DEPENDS_ON", "CONFLICT", "IMPORTS", "SATISFIES", "PART_OF"]}
+                    "rel_type": {"type": "string", "enum": ["IMPLEMENTS", "DECOMPOSES", "DEPENDS_ON", "CONFLICT", "RELATES_TO"]}
                 },
                 "required": ["source_uid", "target_uid", "rel_type"]
             }

@@ -74,7 +74,7 @@ CREATE (:Action {uid: 'ACT-propose_change', tool_name: 'propose_change', scope: 
 CREATE (:Action {uid: 'ACT-update_node', tool_name: 'update_node', scope: 'contextual'});
 
 // ===== PARAMETRIC ACTIONS (Iron Dome 2.0) =====
-// link_nodes: File может создавать IMPLEMENTS связи
+// link_nodes: File/Class/Function могут создавать IMPLEMENTS связи
 CREATE (:Action {
     uid: 'ACT-link_implements',
     tool_name: 'link_nodes',
@@ -90,11 +90,27 @@ CREATE (:Action {
     scope: 'contextual'
 });
 
-// link_nodes: Spec/Requirement могут создавать SATISFIES
+// link_nodes: DEPENDS_ON для зависимостей
 CREATE (:Action {
-    uid: 'ACT-link_satisfies',
+    uid: 'ACT-link_depends',
     tool_name: 'link_nodes',
-    constraint_arg_rel_type: 'SATISFIES',
+    constraint_arg_rel_type: 'DEPENDS_ON',
+    scope: 'contextual'
+});
+
+// link_nodes: CONFLICT для конфликтов требований
+CREATE (:Action {
+    uid: 'ACT-link_conflict',
+    tool_name: 'link_nodes',
+    constraint_arg_rel_type: 'CONFLICT',
+    scope: 'contextual'
+});
+
+// link_nodes: RELATES_TO для Task/Domain связей
+CREATE (:Action {
+    uid: 'ACT-link_relates',
+    tool_name: 'link_nodes',
+    constraint_arg_rel_type: 'RELATES_TO',
     scope: 'contextual'
 });
 
@@ -128,33 +144,39 @@ MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delet
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== PARAMETRIC CAN_PERFORM (Iron Dome 2.0) =====
-// File может создавать IMPLEMENTS связи
-MATCH (nt:NodeType {name: 'File'}), (a:Action {uid: 'ACT-link_implements'})
+// IMPLEMENTS: File/Class/Function → Requirement
+MATCH (nt:NodeType)
+WHERE nt.name IN ['File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action {uid: 'ACT-link_implements'})
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
-// Function может создавать IMPLEMENTS связи
-MATCH (nt:NodeType {name: 'Function'}), (a:Action {uid: 'ACT-link_implements'})
-CREATE (nt)-[:CAN_PERFORM]->(a);
-
-// Class может создавать IMPLEMENTS связи
-MATCH (nt:NodeType {name: 'Class'}), (a:Action {uid: 'ACT-link_implements'})
-CREATE (nt)-[:CAN_PERFORM]->(a);
-
-// Все архитектурные типы могут создавать DECOMPOSES
+// DECOMPOSES: Все архитектурные типы
 MATCH (nt:NodeType)
 WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'File', 'Class', 'Function']
 WITH nt
 MATCH (a:Action {uid: 'ACT-link_decomposes'})
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
-// Spec и Requirement могут создавать SATISFIES
+// DEPENDS_ON: Requirement, Spec, File
 MATCH (nt:NodeType)
-WHERE nt.name IN ['Spec', 'Requirement']
+WHERE nt.name IN ['Requirement', 'Spec', 'File']
 WITH nt
-MATCH (a:Action {uid: 'ACT-link_satisfies'})
+MATCH (a:Action {uid: 'ACT-link_depends'})
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
-// Все типы могут удалять узлы в Builder режиме
+// CONFLICT: Requirement
+MATCH (nt:NodeType {name: 'Requirement'}), (a:Action {uid: 'ACT-link_conflict'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// RELATES_TO: Task, Domain
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Task', 'Domain']
+WITH nt
+MATCH (a:Action {uid: 'ACT-link_relates'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// delete_node: Все типы могут удалять в Builder режиме
 MATCH (nt:NodeType)
 WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
 WITH nt

@@ -160,10 +160,10 @@ node.tag-graph-requirement,
 node.type-requirement,
 node[type="Requirement"],
 node[type="Requirements"],
-node[uid *="REQ-"],
-node[uid *="REQ_"],
-node[id *="REQ-"],
-node[id *="REQ_"],
+node[uid ^="REQ-"],
+node[uid ^="REQ_"],
+node[id ^="REQ-"],
+node[id ^="REQ_"],
 node[label *="REQ-"],
 node[label *="REQ_"],
 node[tag="#Requirements"] {
@@ -180,9 +180,9 @@ node.tag-graph-domain,
 node.type-domain,
 node[type="Domain"],
 node[type="Domain Entities"],
-node[uid *="DOMAIN-"],
-node[uid *="DOMAIN_"],
-node[id *="Domain"],
+node[uid ^="DOMAIN-"],
+node[uid ^="DOMAIN_"],
+node[id ^="Domain"],
 node[label *="DOMAIN"],
 node[tag="#DomainEntities"] {
     background-color: #66BB6A;
@@ -197,10 +197,10 @@ node.tag-graph-spec,
 node.type-spec,
 node[type="Spec"],
 node[type="Specification"],
-node[uid *="SPEC-"],
-node[uid *="SPEC_"],
-node[id *="SPEC-"],
-node[id *="SPEC_"] {
+node[uid ^="SPEC-"],
+node[uid ^="SPEC_"],
+node[id ^="SPEC-"],
+node[id ^="SPEC_"] {
     background-color: #4DB6AC;
     border-color: #00796B;
     shape: round-rectangle;
@@ -212,8 +212,8 @@ node[id *="SPEC_"] {
 node.tag-graph-specitem,
 node.type-specitem,
 node[type="SpecItem"],
-node[uid *="SPEC-ITEM-"],
-node[id *="SPEC-ITEM-"] {
+node[uid ^="SPEC-ITEM-"],
+node[id ^="SPEC-ITEM-"] {
     background-color: #80CBC4;
     border-color: #00897B;
     shape: round-rectangle;
@@ -226,10 +226,10 @@ node[id *="SPEC-ITEM-"] {
 node.tag-graph-idea,
 node.type-idea,
 node[type="Idea"],
-node[uid *="IDEA-"],
-node[uid *="IDEA_"],
-node[id *="IDEA-"],
-node[id *="IDEA_"] {
+node[uid ^="IDEA-"],
+node[uid ^="IDEA_"],
+node[id ^="IDEA-"],
+node[id ^="IDEA_"] {
     background-color: #FF40FF;
     border-color: #000000;
     border-width: 2px;
@@ -242,10 +242,10 @@ node[id *="IDEA_"] {
 node.tag-graph-task,
 node.type-task,
 node[type="Task"],
-node[uid *="TASK-"],
-node[uid *="TASK_"],
-node[id *="TASK-"],
-node[id *="TASK_"] {
+node[uid ^="TASK-"],
+node[uid ^="TASK_"],
+node[id ^="TASK-"],
+node[id ^="TASK_"] {
     background-color: #7986CB;
     border-color: #303F9F;
     shape: round-rectangle;

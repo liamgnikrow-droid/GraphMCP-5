@@ -583,10 +583,52 @@ async def tool_create_concept(arguments: dict) -> list[types.TextContent]:
     uid = f"{c_type.upper()}-{safe_title[:40]}"
     
     # 2. Check Allowed Types (Hardcoded Enum + Logic)
-    # The middleware checked if 'create_concept' is allowed generally.
-    # Ideally we should check specific Transition here too, but for now we rely on Physics.
     if c_type not in ["Spec", "Requirement", "Task", "Idea", "Domain"]:
          return [types.TextContent(type="text", text=f"Error: Invalid concept type '{c_type}'. Epic is DEAD.")]
+
+    # 2.1 META-GRAPH VALIDATION (Critical Fix)
+    # Middleware only checks if 'create_concept' tool is allowed.
+    # We must also check if the SPECIFIC target_type is allowed from the current parent node.
+    parent_uid = get_agent_location()
+    parent_type = get_node_type(parent_uid)
+    
+    # Exception for Genesis: Can always create allowed roots if logic permits, but let's stick to graph rules if possible.
+    # Assuming 'Idea' creation is handled properly by constraints. 
+    # Let's validate strictly.
+    
+    driver = get_driver()
+    
+    meta_validation_query = """
+    MATCH (nt:NodeType {name: $parent_type})-[:CAN_PERFORM]->(a:Action {tool_name: 'create_concept'})
+    WHERE a.target_type = $target_type
+    RETURN count(a) as allowed
+    """
+    
+    val_recs, _, _ = driver.execute_query(
+        meta_validation_query, 
+        {"parent_type": parent_type, "target_type": c_type}, 
+        database_="neo4j"
+    )
+    
+    is_target_allowed = val_recs and val_recs[0]['allowed'] > 0
+    
+    if not is_target_allowed:
+        # Find what IS allowed to help the user
+        hint_query = """
+        MATCH (nt:NodeType {name: $parent_type})-[:CAN_PERFORM]->(a:Action {tool_name: 'create_concept'})
+        RETURN a.target_type as allowed_type
+        """
+        hint_recs, _, _ = driver.execute_query(hint_query, {"parent_type": parent_type}, database_="neo4j")
+        allowed_types = [h["allowed_type"] for h in hint_recs if h["allowed_type"]]
+        
+        return [types.TextContent(
+             type="text", 
+             text=f"❌ PHYSICS ERROR: Hierarchy Violation.\n\n"
+                  f"Location: (:{parent_type} {{uid: '{parent_uid}'}})\n"
+                  f"Action: Create (:{c_type})\n\n"
+                  f"⛔ The Meta-Graph forbids creating a '{c_type}' directly from a '{parent_type}'.\n"
+                  f"✅ Allowed children types from here: {allowed_types}"
+        )]
 
     driver = get_driver()
     current_project = get_current_project_id()
@@ -1001,6 +1043,7 @@ async def list_tools() -> list[types.Tool]:
 
 @mcp.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
+    print(f"DEBUG_TOOL_CALL: name='{name}' arguments={arguments} type={type(arguments)}", file=sys.stderr)
     # --- MIDDLEWARE CHECK ---
     loc_uid = get_agent_location()
     current_node_type = get_node_type(loc_uid)

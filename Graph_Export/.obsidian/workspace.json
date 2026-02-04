@@ -4,17 +4,37 @@
     "type": "split",
     "children": [
       {
-        "id": "255c027f13a9e1c3",
+        "id": "fc496868bba724e6",
         "type": "tabs",
+        "dimension": 35.816618911174785,
         "children": [
           {
-            "id": "6bdb09635ed2e049",
+            "id": "c9a8fd7d5ce9fe35",
             "type": "leaf",
-            "pinned": true,
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "4_Requirements/REQUIREMENT-AUTH_REQUIREMENT.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "REQUIREMENT-AUTH_REQUIREMENT"
+            }
+          }
+        ]
+      },
+      {
+        "id": "c96e00d1c0897a90",
+        "type": "tabs",
+        "dimension": 64.18338108882521,
+        "children": [
+          {
+            "id": "9c602012901377be",
+            "type": "leaf",
             "state": {
               "type": "juggl_view",
               "state": {},
-              "pinned": true,
               "icon": "lucide-file",
               "title": "Juggl"
             }
@@ -93,6 +113,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "4_Requirements/REQUIREMENT-AUTH_REQUIREMENT.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +123,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks"
+              "title": "Backlinks for REQUIREMENT-AUTH_REQUIREMENT"
             }
           },
           {
@@ -111,11 +132,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "4_Requirements/REQUIREMENT-AUTH_REQUIREMENT.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links"
+              "title": "Outgoing links from REQUIREMENT-AUTH_REQUIREMENT"
             }
           },
           {
@@ -153,12 +175,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "4_Requirements/REQUIREMENT-AUTH_REQUIREMENT.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of REQUIREMENT-AUTH_REQUIREMENT"
             }
           },
           {
@@ -200,34 +223,34 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "6bdb09635ed2e049",
+  "active": "9c602012901377be",
   "lastOpenFiles": [
-    "6_Code/Functions/FUNC-test_integrity_internal_js-testTools.md",
-    "6_Code/Functions/FUNC-test_integrity_internal_js-httpPost.md",
-    "6_Code/Functions/FUNC-test_integrity_internal_js-callTool.md",
-    "6_Code/Functions/FUNC-test_codebase_map_js-testMapCodebase.md",
-    "6_Code/Functions/FUNC-test_codebase_map_js-httpPost.md",
-    "6_Code/Functions/FUNC-Tools_test_sync_push_py-test_push.md",
-    "6_Code/Functions/FUNC-Tools_test_server_logic_py-test.md",
-    "6_Code/Functions/FUNC-Tools_test_register_task_py-test_register_task_wikilinks.md",
-    "6_Code/Functions/FUNC-Tools_test_register_task_py-test_register_task_valid.md",
-    "6_Code/Functions/FUNC-Tools_test_register_task_py-test_register_task_no_description.md",
-    "6_Code/Functions/FUNC-Tools_test_register_task_py-test_register_task_english.md",
-    "6_Code/Functions/FUNC-Tools_test_register_task_py-main.md",
-    "6_Code/Functions/FUNC-Tools_test_middleware_py-test_spec_create_actions.md",
-    "6_Code/Functions/FUNC-Tools_test_middleware_py-test_global_tools.md",
-    "6_Code/Functions/FUNC-Tools_test_middleware_py-test_contextual_tools.md",
-    "6_Code/Functions/FUNC-Tools_test_middleware_py-main.md",
-    "6_Code/Functions/FUNC-Tools_test_map_codebase_live_py-test_live_mapping.md",
-    "6_Code/Functions/FUNC-Tools_test_impact_analysis_py-test_create_with_impact.md",
-    "6_Code/Functions/FUNC-Tools_test_impact_analysis_py-test_create_requirement.md",
-    "6_Code/Functions/FUNC-Tools_test_impact_analysis_py-test_create_duplicate.md",
-    "6_Code/Functions/FUNC-Tools_test_impact_analysis_py-set_agent_location.md",
-    "6_Code/Functions/FUNC-Tools_test_impact_analysis_py-main.md",
-    "6_Code/Functions/FUNC-Tools_test_get_full_context_py-test_graph_context.md",
-    "6_Code/Functions/FUNC-Tools_test_get_full_context_py-test_english_query.md",
-    "6_Code/Functions/FUNC-Tools_test_get_full_context_py-test_auth_context.md",
-    "6_Code/Functions/FUNC-Tools_test_get_full_context_py-main.md",
+    "4_Requirements/REQUIREMENT-INFRASTRUKTURA_PROEKTA.md",
+    "4_Requirements/REQUIREMENT-PRINCIPLE__CARDINALITY_INTEGRITY__UNIQUE.md",
+    "4_Requirements/REQUIREMENT-PRINCIPLE__LANGUAGE_INTEGRITY__RUSSIAN_P.md",
+    "4_Requirements/REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C.md",
+    "4_Requirements/REQUIREMENT-SYSTEM__MIDDLEWARE_INTELLIGENCE__LENS.md",
+    "4_Requirements/REQUIREMENT-SYSTEM__MULTI_DATABASE_ISOLATION.md",
+    "4_Requirements/REQUIREMENT-SYSTEM__WORKFLOW_ENFORCEMENT__ROLE_BASED.md",
+    "4_Requirements/REQUIREMENT-TOOL__EXPLAIN_PHYSICS__INTROSPECTION.md",
+    "4_Requirements/REQUIREMENT-TOOL__GET_FULL_CONTEXT__AGGREGATOR.md",
+    "4_Requirements/REQUIREMENT-TOOL__ILLUMINATE_PATH__VERTICAL_TRACE.md",
+    "4_Requirements/REQUIREMENT-TOOL__LOOK_AROUND__DASHBOARD.md",
+    "4_Requirements/REQUIREMENT-TOOL__LOOK_FOR_SIMILAR__SEMANTIC_SEARCH.md",
+    "4_Requirements/REQUIREMENT-TOOL__MAP_CODEBASE__CODE_INTEGRATION.md",
+    "4_Requirements/REQUIREMENT-TOOL__MOVE_TO__NAVIGATION.md",
+    "4_Requirements/REQUIREMENT-TOOL__READ_NODE__CONTENT_ACCESS.md",
+    "4_Requirements/REQUIREMENT-TOOL__SWITCH_PROJECT__CONTEXT_ISOLATION.md",
+    "4_Requirements/REQUIREMENT-TOOL__REGISTER_TASK__ENTRY_POINT.md",
+    "4_Requirements/REQUIREMENT-TOOL__SET_WORKFLOW__MODE_CONTROL.md",
+    "4_Requirements/REQUIREMENT-SYSTEM__BOOTSTRAP___KERNEL_INITIALIZATIO.md",
+    "4_Requirements/REQUIREMENT-PRINTSIP__TSELOSTNOST_PROISHOZHDENIYA__P.md",
+    "4_Requirements/REQUIREMENT-PRINTSIP__KANONICHESKAYA_ONTOLOGIYA__PYA.md",
+    "4_Requirements/REQUIREMENT-PRINTSIP__EDINSTVENNOST_IDEI__ONE_IDEA.md",
+    "4_Requirements/REQUIREMENT-PRINCIPLE__METAGRAPH_LAW.md",
+    "4_Requirements/REQUIREMENT-PRINCIPLE__EXPLICIT_PERMISSIONS.md",
+    "4_Requirements/REQUIREMENT-PERFORMANCE__CACHING___OPTIMIZATION.md",
+    "4_Requirements/REQUIREMENT-PRINCIPLE__PURE_LINKS__NO_WIKI.md",
     "5_Domain",
     "Graph_Physics",
     "2_Specs/Items",

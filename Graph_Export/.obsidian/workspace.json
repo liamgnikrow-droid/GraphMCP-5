@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "2a435dbcfcd3c200",
+        "id": "255c027f13a9e1c3",
         "type": "tabs",
         "children": [
           {
-            "id": "d290c86a34cd655e",
+            "id": "6bdb09635ed2e049",
             "type": "leaf",
             "pinned": true,
             "state": {
@@ -51,7 +51,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "file:FUNC-Tools_server_py-tool_find_orphans",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -72,12 +72,12 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -200,7 +200,7 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "13c0763721178744",
+  "active": "6bdb09635ed2e049",
   "lastOpenFiles": [
     "6_Code/Functions/FUNC-test_integrity_internal_js-testTools.md",
     "6_Code/Functions/FUNC-test_integrity_internal_js-httpPost.md",

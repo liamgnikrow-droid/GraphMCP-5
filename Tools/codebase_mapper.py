@@ -147,6 +147,39 @@ class CodebaseMapper:
             
         return nodes
 
+    def _should_ignore(self, rel_path: str, filename: str) -> bool:
+        """
+        Determines if a file should be ignored based on project rules.
+        Filters out:
+        - Auxiliary tools (maintenance scripts)
+        - Tests (test_*.py)
+        - Documentation/Exports (md/, Graph_Export/)
+        - System logs
+        """
+        # 1. Check extensions
+        if any(filename.endswith(ext) for ext in self.ignore_exts):
+            return True
+            
+        # 2. Check directory patterns
+        path_parts = rel_path.split(os.sep)
+        if 'maintenance' in path_parts: return True
+        if 'archive' in path_parts: return True
+        if 'Graph_Export' in path_parts: return True
+        if 'md' in path_parts: return True
+        if 'examples' in path_parts: return True
+        
+        # 3. Check filename patterns
+        if filename.startswith('test_') or filename.endswith('_test.py'):
+            return True
+        if filename.startswith('mock_'):
+            return True
+            
+        # 4. Specific files
+        if filename in ['sync_watcher.log', '.DS_Store']:
+            return True
+            
+        return False
+
     def scan_and_map(self):
         all_nodes = []
         
@@ -155,11 +188,11 @@ class CodebaseMapper:
             dirs[:] = [d for d in dirs if d not in self.ignore_dirs]
             
             for file in files:
-                if any(file.endswith(ext) for ext in self.ignore_exts):
-                    continue
-                
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, self.project_root)
+                
+                if self._should_ignore(rel_path, file):
+                    continue
                 
                 if file.endswith('.py'):
                     # Use AST

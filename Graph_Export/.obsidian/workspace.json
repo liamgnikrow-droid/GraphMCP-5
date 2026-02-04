@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "7987a40b40a8cae9",
+        "id": "2a435dbcfcd3c200",
         "type": "tabs",
         "children": [
           {
-            "id": "f76ba27741433044",
+            "id": "d290c86a34cd655e",
             "type": "leaf",
             "pinned": true,
             "state": {
@@ -18,37 +18,8 @@
               "icon": "lucide-file",
               "title": "Juggl"
             }
-          },
-          {
-            "id": "d435ce6b90f9eba7",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Graph_Physics/ACT-find_orphans.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "ACT-find_orphans"
-            }
-          },
-          {
-            "id": "09c6f29dad98dec2",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Graph_Physics/ACT-propose_change.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "ACT-propose_change"
-            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -68,7 +39,7 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": true
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -80,7 +51,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "file:FUNC-Tools_server_py-tool_find_orphans",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -101,12 +72,12 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "9e11b79b46dd135e",
@@ -122,7 +93,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -132,7 +102,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for SPEC-ITEM-1.3.1"
+              "title": "Backlinks"
             }
           },
           {
@@ -141,12 +111,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "2_Specs/Items/SPEC-ITEM-1.3.1.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from SPEC-ITEM-1.3.1"
+              "title": "Outgoing links"
             }
           },
           {
@@ -184,13 +153,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "6_Code/Functions/FUNC-Tools_server_py__transliterate.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of FUNC-Tools_server_py__transliterate"
+              "title": "Outline"
             }
           },
           {
@@ -213,8 +181,7 @@
               "title": "Juggl style"
             }
           }
-        ],
-        "currentTab": 4
+        ]
       }
     ],
     "direction": "horizontal",
@@ -233,10 +200,10 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "d435ce6b90f9eba7",
+  "active": "13c0763721178744",
   "lastOpenFiles": [
-    "Graph_Physics/ACT-propose_change.md",
     "Graph_Physics/ACT-find_orphans.md",
+    "Graph_Physics/ACT-propose_change.md",
     "6_Code/Files/FILE-Tools_code_mapper_py.md",
     "6_Code/Files/FILE-Tools_server_py.md",
     "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__extract_body_from_markdown.md",

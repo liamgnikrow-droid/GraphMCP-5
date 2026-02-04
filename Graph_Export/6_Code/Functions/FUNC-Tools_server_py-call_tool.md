@@ -8,6 +8,8 @@ name: "call_tool"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-SYSTEM__MIDDLEWARE_INTELLIGENCE__LENS]]"
 ---
 # call_tool
 

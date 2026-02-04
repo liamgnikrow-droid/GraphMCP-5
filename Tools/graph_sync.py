@@ -145,8 +145,15 @@ class GraphSync:
         fm_lines.append(f'type: "{node_type}"')
 
         # Add all metadata properties
+        # EXCLUDE properties that will be rendered as relationships to avoid YAML key duplication
+        excluded_keys = [
+            'uid', 'type', 'title', 'description', 'created_at', 'updated_at', 'content', 'embedding',
+            # Relationship properties (rendered separately as YAML lists below)
+            'decomposes', 'implements', 'depends_on', 'relates_to', 'restricts', 'can_perform'
+        ]
+        
         for key, val in props.items():
-            if key not in ['uid', 'type', 'title', 'description', 'created_at', 'updated_at', 'content', 'embedding']:
+            if key not in excluded_keys:
                 if val is not None:
                     if isinstance(val, bool):
                         fm_lines.append(f'{key}: {str(val).lower()}')

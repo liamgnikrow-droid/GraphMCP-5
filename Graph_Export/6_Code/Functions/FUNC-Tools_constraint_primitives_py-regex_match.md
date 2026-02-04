@@ -8,6 +8,8 @@ name: "regex_match"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[CON-No_WikiLinks]]"
 ---
 # regex_match
 

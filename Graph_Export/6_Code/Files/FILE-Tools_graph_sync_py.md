@@ -12,6 +12,7 @@ cssclasses: [juggl-node, type-file, premium-card]
 decomposes:
   - "[[CLASS-Tools_graph_sync_py-GraphSync]]"
 implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
   - "[[REQUIREMENT-PRINCIPLE__PURE_LINKS__NO_WIKI]]"
   - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---

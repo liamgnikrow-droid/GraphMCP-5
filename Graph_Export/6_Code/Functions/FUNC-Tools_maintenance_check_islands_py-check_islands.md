@@ -7,6 +7,8 @@ project_id: "graphmcp"
 name: "check_islands"
 tags: [graph/function, state/draft]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[REQUIREMENT-PRINCIPLE__TOPOLOGY_INTEGRITY__NO_ISLAND]]"
 ---
 # check_islands
 

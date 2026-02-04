@@ -4,17 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "df1c455cf78ff836",
+        "id": "325da56806493e02",
         "type": "tabs",
         "children": [
           {
-            "id": "82e15a9d834226c4",
+            "id": "47af39b9da2895bc",
             "type": "leaf",
+            "pinned": true,
             "state": {
-              "type": "empty",
+              "type": "juggl_view",
               "state": {},
+              "pinned": true,
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Juggl"
             }
           }
         ]
@@ -153,12 +155,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "6_Code/Functions/FUNC-Tools_server_py__transliterate.md",
                 "followCursor": true,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of FUNC-Tools_server_py__transliterate"
             }
           },
           {
@@ -201,35 +204,35 @@
       "juggl:Juggl global graph": false
     }
   },
-  "active": "82e15a9d834226c4",
+  "active": "47af39b9da2895bc",
   "lastOpenFiles": [
-    "4_Requirements/REQUIREMENT-INFRASTRUKTURA_PROEKTA.md",
-    "6_Code/Files/FILE-Tools_maintenance_migrate_implements_links_py.md",
-    "2_Specs/SPEC-Graph_Physics.md",
-    "6_Code/Files/FILE-Tools_maintenance_purge_junk_nodes_py.md",
-    "5_Domain/DOMAIN-O_SLUZHIVANIE_GRAFA__MAINTENANCE.md",
-    "5_Domain",
-    "6_Code/Files/FILE-test_integrity_internal_js.md",
-    "6_Code/Files/FILE-md_implementation_plan_md.md",
-    "6_Code/Files/FILE-md_SECURITY_CONSTRAINTS_md.md",
-    "6_Code/Files/FILE-md_README_md.md",
-    "6_Code/Files/FILE-md_NEXT_STEPS_md.md",
-    "6_Code/Files/FILE-md_GENESIS_MANIFESTO_md.md",
-    "6_Code/Files/FILE-Tools_test_server_logic_py.md",
-    "6_Code/Files/FILE-Tools_test_middleware_py.md",
-    "6_Code/Files/FILE-Tools_test_format_cypher_py.md",
-    "Graph_Physics/CON-One_Spec.md",
-    "Graph_Physics/CON-One_Idea.md",
-    "Graph_Physics/CON-No_WikiLinks.md",
-    "Graph_Physics/CON-Russian_Language.md",
-    "Graph_Physics/ACT-update_node.md",
+    "6_Code/Files/FILE-Tools_code_mapper_py.md",
+    "6_Code/Files/FILE-Tools_server_py.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__extract_body_from_markdown.md",
     "Graph_Physics/ACT-propose_change.md",
-    "Graph_Physics/ACT-delete_link.md",
-    "Graph_Physics/ACT-delete_node.md",
-    "Graph_Physics/ACT-link_nodes.md",
-    "Graph_Physics/ACT-create_domain_from_req.md",
-    "Graph_Physics/ACT-create_domain_from_spec.md",
-    "Graph_Physics/ACT-create_req.md",
+    "Graph_Physics/ACT-find_orphans.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_delete_node.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__get_driver.md",
+    "6_Code/Functions/FUNC-Tools_server_py__get_current_project_id.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync____init__.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__sync_all.md",
+    "6_Code/Functions/FUNC-Tools_server_py__get_current_project_root.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__close.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__delete_node.md",
+    "6_Code/Functions/FUNC-Tools_server_py__get_current_workflow.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync___init__.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__fetch_node.md",
+    "6_Code/Functions/FUNC-Tools_server_py__get_node_type.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_close.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_extract_body_from_markdown.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py__GraphSync__sync_node.md",
+    "6_Code/Functions/FUNC-Tools_server_py__transliterate.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_get_driver.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_fetch_node.md",
+    "6_Code/Functions/FUNC-Tools_server_py-get_allowed_tool_names.md",
+    "6_Code/Functions/FUNC-Tools_server_py__check_constraints.md",
+    "6_Code/Functions/FUNC-Tools_graph_sync_py_GraphSync_sync_all.md",
+    "5_Domain",
     "Graph_Physics",
     "2_Specs/Items",
     "9_Unclassified",

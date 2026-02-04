@@ -8,6 +8,9 @@ name: "tool_illuminate_path"
 status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
+implements:
+  - "[[ACT-illuminate_path]]"
+  - "[[REQUIREMENT-TOOL__ILLUMINATE_PATH__VERTICAL_TRACE]]"
 ---
 # tool_illuminate_path
 

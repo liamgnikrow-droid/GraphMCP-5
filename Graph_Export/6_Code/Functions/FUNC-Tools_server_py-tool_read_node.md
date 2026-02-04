@@ -9,6 +9,7 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
+  - "[[ACT-read_node]]"
   - "[[REQUIREMENT-TOOL__READ_NODE__CONTENT_ACCESS]]"
 ---
 # tool_read_node

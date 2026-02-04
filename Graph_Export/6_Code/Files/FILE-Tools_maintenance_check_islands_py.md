@@ -11,6 +11,7 @@ decomposes:
   - "[[FUNC-Tools_maintenance_check_islands_py-check_islands]]"
 implements:
   - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
+  - "[[REQUIREMENT-PRINCIPLE__TOPOLOGY_INTEGRITY__NO_ISLAND]]"
   - "[[REQUIREMENT-SYSTEM__EVOLUTION_PROTOCOL__META_GRAPH_C]]"
 ---
 # check_islands.py

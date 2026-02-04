@@ -2,7 +2,6 @@
 uid: "FILE-Tools_code_mapper_py"
 title: "code_mapper.py"
 type: "File"
-depends-on: ""
 path: "Tools/code_mapper.py"
 project_id: "graphmcp"
 name: "code_mapper.py"

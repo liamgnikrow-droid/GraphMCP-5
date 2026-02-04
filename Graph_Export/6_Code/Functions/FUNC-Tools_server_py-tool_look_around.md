@@ -9,6 +9,7 @@ status: "unknown"
 tags: [graph/function, state/unknown]
 cssclasses: [juggl-node, type-function, premium-card]
 implements:
+  - "[[ACT-look_around]]"
   - "[[REQUIREMENT-TOOL__LOOK_AROUND__DASHBOARD]]"
 ---
 # tool_look_around

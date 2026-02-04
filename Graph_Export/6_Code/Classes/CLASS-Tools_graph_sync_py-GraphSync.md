@@ -18,6 +18,17 @@ decomposes:
   - "[[FUNC-Tools_graph_sync_py-GraphSync_render_markdown]]"
   - "[[FUNC-Tools_graph_sync_py-GraphSync_sync_all]]"
   - "[[FUNC-Tools_graph_sync_py-GraphSync_sync_node]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync___init__]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_close]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_delete_node]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_extract_body_from_markdown]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_fetch_node]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_get_driver]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_render_markdown]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_sync_all]]"
+  - "[[FUNC-Tools_graph_sync_py_GraphSync_sync_node]]"
+implements:
+  - "[[REQUIREMENT-INFRASTRUKTURA_PROEKTA]]"
 ---
 # GraphSync
 

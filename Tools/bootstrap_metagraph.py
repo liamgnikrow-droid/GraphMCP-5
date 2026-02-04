@@ -122,6 +122,109 @@ CREATE (:Action {
     scope: 'contextual'
 });
 
+// ===== DELETE_LINK ACTIONS =====
+// delete_link: Удаление каждого типа связи в Builder режиме
+CREATE (:Action {
+    uid: 'ACT-delete_link_implements',
+    tool_name: 'delete_link',
+    constraint_arg_rel_type: 'IMPLEMENTS',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-delete_link_decomposes',
+    tool_name: 'delete_link',
+    constraint_arg_rel_type: 'DECOMPOSES',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-delete_link_depends',
+    tool_name: 'delete_link',
+    constraint_arg_rel_type: 'DEPENDS_ON',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-delete_link_conflict',
+    tool_name: 'delete_link',
+    constraint_arg_rel_type: 'CONFLICT',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-delete_link_relates',
+    tool_name: 'delete_link',
+    constraint_arg_rel_type: 'RELATES_TO',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+// ===== UPDATE_NODE ACTIONS =====
+CREATE (:Action {
+    uid: 'ACT-update_builder',
+    tool_name: 'update_node',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-update_architect',
+    tool_name: 'update_node',
+    constraint_arg_workflow: 'Architect',
+    scope: 'contextual'
+});
+
+// ===== REGISTER_TASK ACTIONS =====
+CREATE (:Action {
+    uid: 'ACT-register_task_architect',
+    tool_name: 'register_task',
+    constraint_arg_workflow: 'Architect',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-register_task_builder',
+    tool_name: 'register_task',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+// ===== SYNC_GRAPH ACTIONS =====
+CREATE (:Action {
+    uid: 'ACT-sync_builder',
+    tool_name: 'sync_graph',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+// ===== MAP_CODEBASE ACTIONS =====
+CREATE (:Action {
+    uid: 'ACT-map_builder',
+    tool_name: 'map_codebase',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
+CREATE (:Action {
+    uid: 'ACT-map_architect',
+    tool_name: 'map_codebase',
+    constraint_arg_workflow: 'Architect',
+    scope: 'contextual'
+});
+
+// ===== REFRESH_KNOWLEDGE ACTIONS =====
+CREATE (:Action {
+    uid: 'ACT-refresh_builder',
+    tool_name: 'refresh_knowledge',
+    constraint_arg_workflow: 'Builder',
+    scope: 'contextual'
+});
+
 // ===== СВЯЗИ CAN_PERFORM =====
 // Idea может создавать Spec (если Spec ещё нет)
 MATCH (nt:NodeType {name: 'Idea'}), (a:Action {uid: 'ACT-create_spec'})
@@ -181,6 +284,41 @@ MATCH (nt:NodeType)
 WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
 WITH nt
 MATCH (a:Action {uid: 'ACT-delete_builder'})
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+
+// ===== NEW PARAMETRIC CAN_PERFORM =====
+// delete_link: Все типы могут удалять связи в Builder
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action)
+WHERE a.uid IN ['ACT-delete_link_implements', 'ACT-delete_link_decomposes', 
+                'ACT-delete_link_depends', 'ACT-delete_link_conflict', 'ACT-delete_link_relates']
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// update_node: Все типы могут обновляться в Builder/Architect
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action)
+WHERE a.uid IN ['ACT-update_builder', 'ACT-update_architect']
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// register_task: Все типы могут регистрировать задачи в Architect/Builder
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action)
+WHERE a.uid IN ['ACT-register_task_architect', 'ACT-register_task_builder']
+CREATE (nt)-[:CAN_PERFORM]->(a);
+
+// sync_graph, map_codebase, refresh_knowledge: Builder/Architect режимы
+MATCH (nt:NodeType)
+WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
+WITH nt
+MATCH (a:Action)
+WHERE a.uid IN ['ACT-sync_builder', 'ACT-map_builder', 'ACT-map_architect', 'ACT-refresh_builder']
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== ОГРАНИЧЕНИЯ =====

@@ -1142,16 +1142,6 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         "map_codebase",     # NEW: workflow validation
         "refresh_knowledge" # NEW: workflow validation
     ]
-        "create_concept", 
-        "link_nodes", 
-        "delete_node",
-        "delete_link",      # NEW: rel_type + workflow validation
-        "update_node",      # NEW: workflow validation
-        "register_task",    # NEW: workflow validation
-        "sync_graph",       # NEW: workflow validation
-        "map_codebase",     # NEW: workflow validation
-        "refresh_knowledge" # NEW: workflow validation
-    ]
     
     if name in PARAMETRIC_TOOLS:
         allowed, error_msg = check_action_permission(name, arguments)

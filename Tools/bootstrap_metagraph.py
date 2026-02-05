@@ -65,13 +65,8 @@ CREATE (:Action {uid: 'ACT-create_domain_from_spec', tool_name: 'create_concept'
 // Requirement может создавать Domain
 CREATE (:Action {uid: 'ACT-create_domain_from_req', tool_name: 'create_concept', constraint_arg_type: 'Domain', link_type: 'RELATES_TO', scope: 'contextual'});
 
-// Общие контекстные действия
-CREATE (:Action {uid: 'ACT-link_nodes', tool_name: 'link_nodes', scope: 'contextual'});
-CREATE (:Action {uid: 'ACT-delete_node', tool_name: 'delete_node', scope: 'contextual'});
-CREATE (:Action {uid: 'ACT-delete_link', tool_name: 'delete_link', scope: 'contextual'});
-CREATE (:Action {uid: 'ACT-sync_graph', tool_name: 'sync_graph', scope: 'contextual'});
+// Общие контекстные действия (без параметрической валидации)
 CREATE (:Action {uid: 'ACT-propose_change', tool_name: 'propose_change', scope: 'contextual'});
-CREATE (:Action {uid: 'ACT-update_node', tool_name: 'update_node', scope: 'contextual'});
 
 // ===== PARAMETRIC ACTIONS (Iron Dome 2.0) =====
 // link_nodes: File/Class/Function могут создавать IMPLEMENTS связи
@@ -240,10 +235,10 @@ CREATE (nt)-[:CAN_PERFORM]->(a);
 MATCH (nt:NodeType {name: 'Requirement'}), (a:Action {uid: 'ACT-create_domain_from_req'})
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
-// Все типы (кроме Domain) могут использовать общие действия
+// Все типы (кроме Domain) могут использовать общие действия (без параметрической валидации)
 MATCH (nt:NodeType) WHERE nt.name IN ['Idea', 'Spec', 'Requirement', 'Task', 'File', 'Class', 'Function']
 WITH nt
-MATCH (a:Action) WHERE a.uid IN ['ACT-link_nodes', 'ACT-delete_node', 'ACT-delete_link', 'ACT-sync_graph', 'ACT-propose_change', 'ACT-update_node', 'ACT-find_orphans', 'ACT-map_codebase', 'ACT-illuminate_path']
+MATCH (a:Action) WHERE a.uid IN ['ACT-propose_change', 'ACT-find_orphans', 'ACT-illuminate_path']
 CREATE (nt)-[:CAN_PERFORM]->(a);
 
 // ===== PARAMETRIC CAN_PERFORM (Iron Dome 2.0) =====

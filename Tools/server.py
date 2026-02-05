@@ -19,7 +19,8 @@ mcp = Server("graph-native-core")
 sync_tool = GraphSync()
 
 # --- PHASE 8: MULTI-PROJECT STATE ---
-STATE_FILE = os.path.join(os.path.dirname(__file__), ".active_project_state")
+# Fix: Move state file to WORKSPACE_ROOT (writable) instead of Tools/ (read-only in Docker)
+STATE_FILE = os.path.join(WORKSPACE_ROOT, ".active_project_state")
 
 def load_project_state():
     """Loads active project state from file persistence."""
